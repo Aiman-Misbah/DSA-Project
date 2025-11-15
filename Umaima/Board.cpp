@@ -3,7 +3,7 @@
 #include <vector>
 using namespace std;
 
-Board::Board() : head(NULL), tail(NULL), rows(20), cols(10), cell(30) {
+Board::Board() : head(NULL), tail(NULL), rows(20), cols(15), cell(35) {
     colours = GetCellColours();
     Initialize();
 }
