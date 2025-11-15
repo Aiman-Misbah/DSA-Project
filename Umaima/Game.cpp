@@ -66,13 +66,13 @@ void Game::Draw() {
 	current.Draw(11,11);
 	switch (next.id) {
 	case 3:
-		next.Draw(256, 270);
+		next.Draw(256, 670);
 		break;
 	case 4:
-		next.Draw(255, 260);
+		next.Draw(255, 660);
 		break;
 	default:
-		next.Draw(260, 270);
+		next.Draw(260, 670);
 		break;
 	}
 }
@@ -139,7 +139,7 @@ bool Game::HasCollided() {
 
 void Game::RotatePiece() {
 	if (!GameOver) {
-		// 🔄 CHANGED: Use recursive wall kick rotation
+		// ?? CHANGED: Use recursive wall kick rotation
 		bool rotationSuccess = current.RotateWithWallKicks(board);
 		
 		if (rotationSuccess) {
