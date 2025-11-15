@@ -7,11 +7,11 @@ using namespace std;
 
 // Node for linked list row
 struct RowNode {
-    int rowData[10];  // Each row has 10 cells
+    int rowData[15];  // Each row has 10 cells
     RowNode* next;
 
     RowNode() : next(NULL) {
-        for (int i = 0; i < 10; i++) rowData[i] = 0;
+        for (int i = 0; i < 15; i++) rowData[i] = 0;
     }
 };
 
