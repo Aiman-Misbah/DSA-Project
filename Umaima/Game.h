@@ -2,7 +2,7 @@
 #include <iostream>
 #include "Board.h"
 #include "Pieces.cpp"
-#include "LinkedList.h"  // Add this
+#include "LinkedList.h"
 #include <vector>
 #include <raylib.h>
 using namespace std;
@@ -10,7 +10,7 @@ using namespace std;
 class Game {
 private:
     Board board;
-    LinkedList pieceBag;  // Replace vector with LinkedList
+    LinkedList pieceBag;
     Piece current;
     Piece next;
     bool HasCollided();
@@ -34,4 +34,6 @@ public:
     int score;
     ~Game();
     Music music;
+    bool musicOn;           // ADD: Music state
+    void ToggleMusic();     // ADD: Toggle method
 };
