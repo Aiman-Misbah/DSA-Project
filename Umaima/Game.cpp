@@ -20,6 +20,7 @@ Game::Game() {
 	score = 0;
 	InitAudioDevice();
 	music = LoadMusicStream("Sounds/music.mp3");
+	musicOn = true;
 	PlayMusicStream(music);
 	RotateSound = LoadSound("Sounds/rotate.mp3");
 	ClearSound = LoadSound("Sounds/clear.mp3");
@@ -30,6 +31,16 @@ Game::~Game(){
 	UnloadSound(ClearSound);
 	UnloadMusicStream(music);
 	CloseAudioDevice(); 
+}
+
+void Game::ToggleMusic() {
+	musicOn = !musicOn;
+	if (musicOn) {
+		ResumeMusicStream(music);
+	}
+	else {
+		PauseMusicStream(music);
+	}
 }
 
 Piece Game::GetRandomPiece() {
@@ -128,7 +139,7 @@ bool Game::HasCollided() {
 
 void Game::RotatePiece() {
 	if (!GameOver) {
-		// ?? CHANGED: Use recursive wall kick rotation
+		// 🔄 CHANGED: Use recursive wall kick rotation
 		bool rotationSuccess = current.RotateWithWallKicks(board);
 		
 		if (rotationSuccess) {
