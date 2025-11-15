@@ -5,7 +5,7 @@
 using namespace std;
 
 Piece::Piece() {
-	size = 30;
+	size = 35;
 	state = 0;
 	colours = GetCellColours();
 	id = 0;
