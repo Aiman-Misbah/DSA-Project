@@ -3,6 +3,7 @@
 #include "Board.h"
 #include "Pieces.cpp"
 #include "LinkedList.h"
+#include "ScoreAVL.h"  // ADD: Include AVL tree
 #include <vector>
 #include <raylib.h>
 using namespace std;
@@ -24,6 +25,11 @@ private:
     Piece GetRandomPiece();
     Sound RotateSound;
     Sound ClearSound;
+    double countdownStartTime;      // YOUR: Countdown timer
+    bool isCountingDown;            // YOUR: Countdown state
+    int countdownNumber;            // YOUR: Countdown number
+    Piece ghostPiece;               // YOUR: Ghost piece
+    void UpdateGhostPiece();        // YOUR: Update ghost
 
 public:
     Game();
@@ -31,9 +37,19 @@ public:
     void HandleInput();
     void MoveDown();
     bool GameOver;
-    int score;
+    int score;                      // KEEP: Your score variable name
+    ScoreAVL scores;                // ADD: AVL tree for scores
     ~Game();
     Music music;
-    bool musicOn;           // ADD: Music state
-    void ToggleMusic();     // ADD: Toggle method
+    bool musicOn;
+    void ToggleMusic();
+    void StartCountdown();          // YOUR: Countdown methods
+    void UpdateCountdown();
+    bool IsCountingDown() const { return isCountingDown; }
+    int GetCountdownNumber() const { return countdownNumber; }
+    void ToggleGhostPiece() { showGhost = !showGhost; }
+    bool showGhost;                 // YOUR: Ghost piece toggle
+    void HardDrop();                // YOUR: Hard drop
+    bool isDropping;                // YOUR: Drop state
+    void UpdateHardDrop();          // YOUR: Update hard drop
 };
