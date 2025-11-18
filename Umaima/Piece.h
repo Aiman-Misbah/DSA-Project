@@ -27,8 +27,10 @@ public:
 	void UndoRotation();
 
 	//  NEW: Recursive rotation with backtracking
-	bool RotateWithWallKicks( Board& board);
+	bool RotateWithWallKicks(Board& board);
 	bool TryRotationWithOffset(Board& board, int rowOffset, int colOffset, int attempts);
 	bool HasCollision(Board& board);
+	void DrawGhost(int x, int y);
+	Piece GetGhostPiece(Board& board);
 
 };
