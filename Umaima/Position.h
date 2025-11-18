@@ -8,3 +8,4 @@ class Position {
 		int ROW;
 		int COL;
 };
+
