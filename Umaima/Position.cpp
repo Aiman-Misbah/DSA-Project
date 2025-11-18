@@ -6,3 +6,4 @@ Position::Position(int r, int c) {
 	ROW = r;
 	COL  = c;
 }
+
