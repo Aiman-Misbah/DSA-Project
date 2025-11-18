@@ -3,7 +3,6 @@
 #include <raylib.h>
 #include <vector>
 using namespace std;
-
 //extern keyword isliye bcz then we can use this constant easily in other files as well
 const Color DarkGray = { 26, 31, 40, 255 };
 const Color Green = { 47, 230,23,255 };
