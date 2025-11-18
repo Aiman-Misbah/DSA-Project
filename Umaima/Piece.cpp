@@ -5,52 +5,52 @@
 using namespace std;
 
 Piece::Piece() {
-	size = 35;
-	state = 0;
-	colours = GetCellColours();
-	id = 0;
-	rowOffset = 0;
-	colOffset = 0;
+    size = 35;
+    state = 0;
+    colours = GetCellColours();
+    id = 0;
+    rowOffset = 0;
+    colOffset = 0;
 
 }
 
 void Piece::Draw(int x, int y) {
-	vector<Position> tiles = GetCellPositions();
-	for (Position item : tiles) {
-		DrawRectangle(item.COL * size+y, item.ROW * size+x, size - 1, size - 1, colours[id]);
-	}
+    vector<Position> tiles = GetCellPositions();
+    for (Position item : tiles) {
+        DrawRectangle(item.COL * size + y, item.ROW * size + x, size - 1, size - 1, colours[id]);
+    }
 }
 
 void Piece::Move(int r, int c) {
-	rowOffset += r;
-	colOffset += c;
+    rowOffset += r;
+    colOffset += c;
 }
 
 vector<Position> Piece::GetCellPositions() {
-	vector<Position> tiles = cells[state];
-	vector<Position> newTiles;
-	for (Position item : tiles) {
-		Position pos = Position(item.ROW + rowOffset, item.COL + colOffset);
-		newTiles.push_back(pos);
-	}
-	return newTiles;
+    vector<Position> tiles = cells[state];
+    vector<Position> newTiles;
+    for (Position item : tiles) {
+        Position pos = Position(item.ROW + rowOffset, item.COL + colOffset);
+        newTiles.push_back(pos);
+    }
+    return newTiles;
 }
 
 void Piece::Rotate() {
-	state++;
-	if (state == 4) {
-		state = 0;
-	}
+    state++;
+    if (state == 4) {
+        state = 0;
+    }
 }
 
 void Piece::UndoRotation() {
-	state--;
-	if (state == -1) {
-		state = 3;
-	}
+    state--;
+    if (state == -1) {
+        state = 3;
+    }
 }
 
-bool Piece::HasCollision(Board& board)  {
+bool Piece::HasCollision(Board& board) {
     vector<Position> tiles = GetCellPositions();
     for (Position item : tiles) {
         if (board.CollisionDetected(item.ROW, item.COL)) {
@@ -59,6 +59,7 @@ bool Piece::HasCollision(Board& board)  {
     }
     return false;
 }
+
 
 bool Piece::TryRotationWithOffset(Board& board, int rowOffset, int colOffset, int attempts) {
     //  BASE CASE: No more attempts
@@ -125,4 +126,29 @@ bool Piece::RotateWithWallKicks(Board& board) {
     colOffset = originalCol;
 
     return false; //  No valid position found
+}
+
+Piece Piece::GetGhostPiece(Board& board) {
+    Piece ghost = *this;  // Create a copy of current piece
+
+    // Move ghost down until it collides
+    while (!ghost.HasCollision(board)) {
+        ghost.Move(1, 0);
+    }
+    // Move back up one to the last valid position
+    ghost.Move(-1, 0);
+
+    return ghost;
+}
+
+void Piece::DrawGhost(int x, int y) {
+    vector<Position> tiles = GetCellPositions();
+    Color ghostColor = colours[id];
+    ghostColor.a = 80;  // Make it semi-transparent (80/255 opacity)
+
+    for (Position item : tiles) {
+        DrawRectangle(item.COL * size + y, item.ROW * size + x, size - 1, size - 1, ghostColor);
+        // Optional: Draw border to make it more visible
+        DrawRectangleLines(item.COL * size + y, item.ROW * size + x, size - 1, size - 1, Fade(WHITE, 0.3f));
+    }
 }
