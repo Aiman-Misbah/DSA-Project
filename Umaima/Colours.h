@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 using namespace std;
-
 // declare the colors (not define)
 extern const Color DarkGray;
 extern const Color Green;
