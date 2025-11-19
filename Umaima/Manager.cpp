@@ -60,7 +60,7 @@ void Manager::Update(bool& musicOn, bool& gamePaused, bool isCountingDown, bool&
     }
 }
 
-void Manager::Draw(bool musicOn, bool gamePaused, int score, Font& font, bool ghostEnabled, float ghostAnimationProgress) {
+void Manager::Draw(bool musicOn, bool gamePaused, int score, Font& font, bool ghostEnabled, float ghostAnimationProgress, double time, int lines) {
     DrawTextEx(font, "Score", { 765,15 }, 38, 2, WHITE);
     DrawTextEx(font, "Next", { 770,175 }, 38, 2, WHITE);
 
@@ -74,25 +74,23 @@ void Manager::Draw(bool musicOn, bool gamePaused, int score, Font& font, bool gh
     DrawRectangleRounded({ 720, 215, 170,160 }, 0.3f, 6, myBlue);
 
     // Music button
-    float musicHoverScale = isHoveringMusic ? buttonScale * 1.2f : buttonScale;
-    Color musicHoverColor = isHoveringMusic ? LIGHTGRAY : WHITE;
+     Color musicHoverColor = isHoveringMusic ? LIGHTGRAY : WHITE;
 
     if (musicOn) {
-        DrawTextureEx(musicOnTex, { (float)musicX, (float)musicY }, 0.0f, musicHoverScale, musicHoverColor);
+        DrawTextureEx(musicOnTex, { (float)musicX, (float)musicY }, 0.0f, buttonScale, musicHoverColor);
     }
     else {
-        DrawTextureEx(musicOffTex, { (float)musicX, (float)musicY }, 0.0f, musicHoverScale, musicHoverColor);
+        DrawTextureEx(musicOffTex, { (float)musicX, (float)musicY }, 0.0f, buttonScale, musicHoverColor);
     }
 
     // Pause button
-    float pauseHoverScale = isHoveringPause ? buttonScale * 1.2f : buttonScale;
     Color pauseHoverColor = isHoveringPause ? LIGHTGRAY : WHITE;
 
     if (gamePaused) {
-        DrawTextureEx(playTex, { (float)pauseX, (float)pauseY }, 0.0f, pauseHoverScale, pauseHoverColor);
+        DrawTextureEx(playTex, { (float)pauseX, (float)pauseY }, 0.0f, buttonScale, pauseHoverColor);
     }
     else {
-        DrawTextureEx(pauseTex, { (float)pauseX, (float)pauseY }, 0.0f, pauseHoverScale, pauseHoverColor);
+        DrawTextureEx(pauseTex, { (float)pauseX, (float)pauseY }, 0.0f, buttonScale, pauseHoverColor);
     }
 
     // Ghost toggle
@@ -135,6 +133,31 @@ void Manager::Draw(bool musicOn, bool gamePaused, int score, Font& font, bool gh
 
     Color circleColor = isHoveringGhost ? Color{ 250, 250, 250, 255 } : WHITE;
     DrawCircle(circleX, ghostToggleY + toggleHeight / 2, 14.0f, circleColor);
+
+    //Time Display
+    DrawTextEx(font, "Time", { 780, 570 }, 28, 2, WHITE);
+    DrawRectangleRounded({ 735, 600, 170, 50 }, 0.3f, 6, myBlue);
+
+    char timeText[20];
+    int minutes = (int)time / 60;
+    int seconds = (int)time % 60;
+    snprintf(timeText, sizeof(timeText), "%02d:%02d", minutes, seconds);
+
+    Vector2 timeTextSize = MeasureTextEx(font, timeText, 24, 1);
+    DrawTextEx(font, timeText,
+        { 735 + (170 - timeTextSize.x) / 2, 600 + (50 - timeTextSize.y) / 2 },
+        24, 1, WHITE);
+
+    DrawTextEx(font, "Lines", { 600, 570 }, 28, 2, WHITE);  // Position below time
+    DrawRectangleRounded({ 550, 600, 170, 50 }, 0.3f, 6, myBlue);
+   
+    char linesText[20];
+    snprintf(linesText, sizeof(linesText), "%d", lines);
+
+    Vector2 linesTextSize = MeasureTextEx(font, linesText, 24, 1);
+    DrawTextEx(font, linesText,
+        { 550 + (170 - linesTextSize.x) / 2, 600 + (50 - linesTextSize.y) / 2 },
+        24, 1, WHITE);
 }
 
 void Manager::UnloadTextures() {
