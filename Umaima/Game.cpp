@@ -32,13 +32,37 @@ Game::Game() {
 	ghostPiece = current.GetGhostPiece(board);
 	showGhost = true;
 	isDropping = false;
+	gameStartTime = 0;
+	totalPlayTime = 0;
+	isTimeTracking = false;
+	lastPauseTime = 0;
+
 }
 
+double Game::GetPlayTime() const {
+	if (!isTimeTracking) return totalPlayTime;
+	return totalPlayTime + (GetTime() - gameStartTime);
+}
+
+void Game::StartTimeTracking() {
+	if (!isTimeTracking) {
+		gameStartTime = GetTime();
+		isTimeTracking = true;
+	}
+}
+
+void Game::StopTimeTracking() {
+	if (isTimeTracking) {
+		totalPlayTime += (GetTime() - gameStartTime);
+		isTimeTracking = false;
+	}
+}
 
 void Game::StartCountdown() {
 	isCountingDown = true;
 	countdownNumber = 3;
 	countdownStartTime = GetTime();
+	StopTimeTracking();
 }
 
 void Game::UpdateCountdown() {
@@ -54,7 +78,9 @@ void Game::UpdateCountdown() {
 	else if (elapsed >= 1.0 && countdownNumber == 1) {
 		isCountingDown = false;
 		countdownNumber = 0;
+		StartTimeTracking();
 	}
+
 }
 
 
@@ -271,10 +297,18 @@ void Game::Reset() {
 	GameOver = false;
 	score = 0;  // KEEP: Your variable name
 	UpdateGhostPiece();
+	totalPlayTime = 0;
+	isTimeTracking = false;
+	gameStartTime = 0;
+	totalLinesCleared = 0;
+
 }
 
 
 void Game::UpdateScore(int lines, int down) {
+	if (lines > 0) {
+		totalLinesCleared += lines;
+	}
 	if (lines == 1)
 		score += 100;
 	else if (lines == 2)
