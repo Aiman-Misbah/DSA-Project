@@ -29,6 +29,6 @@ public:
 
     void LoadTextures();
     void Update(bool& musicOn, bool& gamePaused, bool isCountingDown, bool& ghostEnabled, float& ghostAnimationProgress);
-    void Draw(bool musicOn, bool gamePaused, int score, Font& font, bool ghostEnabled, float ghostAnimationProgress);
+    void Draw(bool musicOn, bool gamePaused, int score, Font& font, bool ghostEnabled, float ghostAnimationProgress, double time, int lines);
     void UnloadTextures();
 };
