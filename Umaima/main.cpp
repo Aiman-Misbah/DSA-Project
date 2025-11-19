@@ -2,7 +2,7 @@
 #include <raylib.h>
 #include "Game.h"
 #include "Manager.h"
-#include "WelcomeScreen.h"  // Include the new WelcomeScreen
+#include "WelcomeScreen.h"
 #include <cstdlib>
 #include <ctime>
 #include "Colours.h"
@@ -28,21 +28,33 @@ int main() {
 
     Game game;
     Manager Manager;
-    WelcomeScreen welcomeScreen;  // Create welcome screen instance
+    WelcomeScreen welcomeScreen;
     bool gamePaused = false;
     bool wasPaused = false;
     bool gameStarted = false;
-    float ghostAnimationProgress = 1.0f; // Start at 1.0 (fully ON)
+    bool showInstructions = false;  // NEW: Track instructions screen
+    float ghostAnimationProgress = 1.0f;
     bool wasGhostEnabled = true;
 
     while (WindowShouldClose() == false) {
         if (!gameStarted) {
-            // Welcome screen logic
-            bool startGame = false;
-            welcomeScreen.Update(startGame);
-            if (startGame) {
-                gameStarted = true;
-                game.StartCountdown(); // Start the initial countdown
+            if (showInstructions) {
+                // NEW: Instructions screen logic
+                Vector2 mouse = GetMousePosition();
+                Rectangle backBounds = { 400, 600, 200, 60 };
+                
+                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && 
+                    CheckCollisionPointRec(mouse, backBounds)) {
+                    showInstructions = false;
+                }
+            } else {
+                // Welcome screen logic
+                bool startGame = false;
+                welcomeScreen.Update(startGame, showInstructions);  // UPDATED: Pass showInstructions
+                if (startGame) {
+                    gameStarted = true;
+                    game.StartCountdown();
+                }
             }
         }
         else {
@@ -54,7 +66,7 @@ int main() {
             }
 
             if (ghostAnimationProgress < 1.0f) {
-                ghostAnimationProgress += GetFrameTime() * 5.0f; // Adjust speed here
+                ghostAnimationProgress += GetFrameTime() * 5.0f;
                 if (ghostAnimationProgress > 1.0f) ghostAnimationProgress = 1.0f;
             }
             Manager.Update(game.musicOn, gamePaused, game.IsCountingDown(), game.showGhost, ghostAnimationProgress);
@@ -66,25 +78,31 @@ int main() {
 
             game.UpdateCountdown();
 
+            // Time tracking control - FIXED VERSION
+            // SIMPLIFIED Time tracking control
+            if (gamePaused || game.IsCountingDown() || game.GameOver) {
+                game.StopTimeTracking(); // Stop timer in these states
+            }
+            else {
+                game.StartTimeTracking(); // Start timer only when actually playing
+            }
+
             if (game.musicOn && !gamePaused && !game.IsCountingDown()) {
                 UpdateMusicStream(game.music);
             }
 
-            // In main.cpp, inside the while loop (after uiManager.Update):
             if (!gamePaused && !game.IsCountingDown()) {
                 game.HandleInput();
 
-                // NEW: Handle hard drop animation at faster speed
                 if (game.isDropping) {
-                    static double lastHardDropTime = 0;  // Track time for hard drop
+                    static double lastHardDropTime = 0;
                     double currentTime = GetTime();
-                    if (currentTime - lastHardDropTime >= 0.02) {  // Faster than normal (0.05s vs 0.2s)
+                    if (currentTime - lastHardDropTime >= 0.02) {
                         game.UpdateHardDrop();
                         lastHardDropTime = currentTime;
                     }
                 }
                 else {
-                    // Normal move down (only if not hard dropping)
                     if (EventTriggered(0.2)) {
                         game.MoveDown();
                     }
@@ -98,18 +116,21 @@ int main() {
         ClearBackground(darkBlue);
 
         if (!gameStarted) {
-            // Draw welcome screen
-            welcomeScreen.Draw();
+            if (showInstructions) {
+                // NEW: Draw instructions screen
+                welcomeScreen.DrawInstructions();
+            } else {
+                // Draw welcome screen
+                welcomeScreen.Draw();
+            }
         }
         else {
-            // Draw game
-            Manager.Draw(game.musicOn, gamePaused, game.score, font, game.showGhost, ghostAnimationProgress);
+            // Draw game (same as before)
+            Manager.Draw(game.musicOn, gamePaused, game.score, font, game.showGhost, ghostAnimationProgress, game.GetPlayTime(), game.GetTotalLinesCleared());
             game.Draw();
 
             if (game.GameOver) {
                 DrawTextEx(font, "GAME OVER", { 320,450 }, 38, 2, WHITE);
-
-                // Optionally add a "Back to Menu" button here later
             }
 
             if (gamePaused) {
