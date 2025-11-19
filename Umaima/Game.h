@@ -30,6 +30,11 @@ private:
     int countdownNumber;            // YOUR: Countdown number
     Piece ghostPiece;               // YOUR: Ghost piece
     void UpdateGhostPiece();        // YOUR: Update ghost
+    double gameStartTime;
+    double totalPlayTime;
+    bool isTimeTracking;
+    double lastPauseTime;
+    int totalLinesCleared;
 
 public:
     Game();
@@ -52,4 +57,8 @@ public:
     void HardDrop();                // YOUR: Hard drop
     bool isDropping;                // YOUR: Drop state
     void UpdateHardDrop();          // YOUR: Update hard drop
+    double GetPlayTime() const;
+    void StartTimeTracking();
+    void StopTimeTracking();
+    int GetTotalLinesCleared() const{ return totalLinesCleared;  }
 };
