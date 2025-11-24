@@ -37,6 +37,14 @@ Game::Game() {
 	isTimeTracking = false;
 	lastPauseTime = 0;
 
+	undoStack = UndoStack(50);        // 50 undo steps
+	pieceQueue = PieceQueue(5);       // 5-piece preview
+
+	// Initialize piece queue with starting pieces
+	pieceQueue.FillStartup();
+	current = pieceQueue.Dequeue();
+	next = pieceQueue.Peek();
+
 }
 
 double Game::GetPlayTime() const {
@@ -182,25 +190,36 @@ void Game::HandleInput() {
 
 	switch (key) {
 	case KEY_LEFT:
+		SaveUndoState();
 		MoveLeft();
 		pieceMoved = true;
 		break;
 	case KEY_RIGHT:
+		SaveUndoState();
 		MoveRight();
 		pieceMoved = true;
 		break;
 	case KEY_DOWN:
+		SaveUndoState();
 		MoveDown();
 		UpdateScore(0, 1);
 		pieceMoved = true;
 		break;
 	case KEY_UP:
+		SaveUndoState();
 		RotatePiece();
 		pieceMoved = true;
 		break;
 	case KEY_SPACE:  // YOUR: Hard drop
+		SaveUndoState();
 		HardDrop();
 		pieceMoved = true;
+		break;
+	case KEY_Z:  // ADD UNDO KEY (Z key)
+		if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+			UndoMove();
+			pieceMoved = true;
+		}
 		break;
 	}
 
@@ -255,11 +274,16 @@ void Game::LockPiece() {
 	for (Position item : tiles) {
 		board.SetCell(item.ROW, item.COL, current.id);
 	}
-	current = next;
+
+	// USE PIECE QUEUE INSTEAD OF RANDOM
+	current = pieceQueue.Dequeue();
+	next = pieceQueue.Peek();
+	undoStack.Clear();  // Clear undo history after locking
+
 	if (PieceFits() == false) {
 		GameOver = true;
 	}
-	next = GetRandomPiece();
+
 	int rowsCleared = board.ClearRows();
 	if (rowsCleared > 0) {
 		PlaySound(ClearSound);
@@ -282,26 +306,21 @@ bool Game::PieceFits() {
 void Game::Reset() {
 	board.Initialize();
 
-	// Refill the piece bag
-	pieceBag.Clear();
-	pieceBag.AddPiece(IPiece());
-	pieceBag.AddPiece(JPiece());
-	pieceBag.AddPiece(LPiece());
-	pieceBag.AddPiece(OPiece());
-	pieceBag.AddPiece(SPiece());
-	pieceBag.AddPiece(TPiece());
-	pieceBag.AddPiece(ZPiece());
+	// USE PIECE QUEUE INSTEAD OF LINKED LIST BAG
+	pieceQueue.Clear();
+	pieceQueue.FillStartup();
+	current = pieceQueue.Dequeue();
+	next = pieceQueue.Peek();
 
-	current = GetRandomPiece();
-	next = GetRandomPiece();
+	undoStack.Clear();  // CLEAR UNDO STACK
+
 	GameOver = false;
-	score = 0;  // KEEP: Your variable name
+	score = 0;
 	UpdateGhostPiece();
 	totalPlayTime = 0;
 	isTimeTracking = false;
 	gameStartTime = 0;
 	totalLinesCleared = 0;
-
 }
 
 
@@ -327,4 +346,16 @@ void Game::UpdateScore(int lines, int down) {
 
 	// ADD: Insert into AVL tree
 	scores.Insert(score);
+}
+
+// UNDO SYSTEM FUNCTIONS
+void Game::SaveUndoState() {
+	undoStack.Push(current);
+}
+
+void Game::UndoMove() {
+	if (!undoStack.IsEmpty() && !GameOver) {
+		current = undoStack.Pop();
+		UpdateGhostPiece();
+	}
 }
