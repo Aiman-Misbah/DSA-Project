@@ -4,6 +4,8 @@
 #include "Pieces.cpp"
 #include "LinkedList.h"
 #include "ScoreAVL.h"  // ADD: Include AVL tree
+#include "UndoStack.h"
+#include "PieceQueue.h"
 #include <vector>
 #include <raylib.h>
 using namespace std;
@@ -35,6 +37,11 @@ private:
     bool isTimeTracking;
     double lastPauseTime;
     int totalLinesCleared;
+
+    UndoStack undoStack;
+    PieceQueue pieceQueue;
+    void SaveUndoState();
+    void UndoMove();
 
 public:
     Game();
