@@ -12,7 +12,7 @@ private:
     int capacity;
 
 public:
-    UndoStack(int cap = 50);
+    UndoStack(int cap = 1);
     ~UndoStack();
 
     void Push(const Piece& snapshot);
