@@ -17,6 +17,8 @@ Game::Game() : pieceQueue(5) {
     previousScore = 0;
     previousLinesCleared = 0;
 
+	previousPieceQueue = pieceQueue.GetAllPieces();
+
     InitAudioDevice();
     music = LoadMusicStream("Sounds/music.mp3");
     musicOn = true;
@@ -244,6 +246,9 @@ void Game::SaveBoardState() {
     previousScore = score;
     previousLinesCleared = totalLinesCleared;
     previousBoardState = board.GetBoardState();
+
+	previousPieceQueue = pieceQueue.GetAllPieces();
+
 }
 
 void Game::RestoreBoardState() {
@@ -255,11 +260,17 @@ void Game::UndoLastLock() {
         return;
     }
 
+    cout << "=== UNDO LAST LOCK ===" << endl;
+
     // Get the last locked piece
     Piece lastLockedPiece = lockedPieceStack.Pop();
 
     // RESTORE THE ENTIRE BOARD STATE (this will restore any cleared lines)
     RestoreBoardState();
+
+    if (!previousPieceQueue.empty()) {
+        pieceQueue.ClearAndSetPieces(previousPieceQueue);
+    }
 
     // Reset the piece to top position to make it fall again
     UndoStack::ResetPieceToTop(lastLockedPiece);
@@ -267,21 +278,15 @@ void Game::UndoLastLock() {
     // Set this as the current falling piece
     current = lastLockedPiece;
 
-    // ❌ REMOVE THIS COMPLEX AVL LOGIC:
-    // if (!previousScores.root) {
-    //     score = 0;
-    // } else {
-    //     score = currentScoreBeforeLock;
-    // }
-
-    // ✅ REPLACE WITH SIMPLE VARIABLE ASSIGNMENT:
+    // RESTORE score and lines
     score = previousScore;
     totalLinesCleared = previousLinesCleared;
 
     // Update ghost piece
     UpdateGhostPiece();
 
-    cout << "Last locked piece restored! Score reverted to: " << score << endl;
+    cout << "Undo complete! Board, queue, and score reverted. Hold piece unchanged." << endl;
+    cout << "Piece queue restored to size: " << previousPieceQueue.size() << endl;
 }
 
 
@@ -488,7 +493,6 @@ void Game::HandleInput() {
     }
 }
 
-
 void Game::Reset() {
     cout << "=== GAME RESET ===" << endl;
     board.Initialize();
@@ -500,12 +504,28 @@ void Game::Reset() {
 
     // Reset hold
     isHolding = false;
-
     holdPiece = Piece();
 
     GameOver = false;
     score = 0;
-    // ... rest of reset method
+    previousScore = 0;
+    previousLinesCleared = 0;
+
+    previousPieceQueue.clear();
+
+    // Clear board state
+    previousBoardState.clear();
+
+    // Clear undo stack on reset
+    lockedPieceStack.Clear();
+
+    UpdateGhostPiece();
+    totalPlayTime = 0;
+    isTimeTracking = false;
+    gameStartTime = 0;
+    totalLinesCleared = 0;
+
+    cout << "Game reset complete!" << endl;
 }
 
 void Game::UpdateScore(int lines) {
