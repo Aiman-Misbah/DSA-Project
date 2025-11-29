@@ -39,9 +39,9 @@ private:
 
     // Undo functionality for last locked piece
     UndoStack lockedPieceStack{ 1 };
-    ScoreAVL previousScores;        // Store previous scores in AVL
+
+    int previousScore;        // Store previous scores in AVL
     int previousLinesCleared;
-    int currentScoreBeforeLock;     // Store score right before locking
 
 
 
@@ -68,7 +68,6 @@ public:
     void MoveDown();
     bool GameOver;
     int score;
-    ScoreAVL scores;
     ~Game();
     Music music;
     bool musicOn;
