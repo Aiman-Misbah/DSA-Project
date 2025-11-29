@@ -14,9 +14,10 @@ Game::Game() : pieceQueue(5) {
     GameOver = false;
 
     score = 0;
-	previousScore = 0;
+	currentScoreBeforeLock = 0;
 	previousLinesCleared = 0;
 
+	previousScores.Insert(0); // Initialize with score 0
 
     InitAudioDevice();
     music = LoadMusicStream("Sounds/music.mp3");
@@ -39,7 +40,7 @@ Game::Game() : pieceQueue(5) {
     totalLinesCleared = 0;
 
     // Initialize undo stack for locked pieces
-    lockedPieceStack = UndoStack(10);
+    lockedPieceStack = UndoStack(1);
 
     // Initialize hold
     isHolding = false;
@@ -248,14 +249,16 @@ void Game::Draw() {
 void Game::SaveBoardState() {
     if (GameOver || isCountingDown) return;
 
-    // Save current score state
-	previousScore = score;
+    // Store current score and lines
+    currentScoreBeforeLock = score;           // Store current score
     previousLinesCleared = totalLinesCleared;
 
+    // Also insert into AVL for tracking
+    previousScores.Insert(score);
 }
 
 void Game::UndoLastLock() {
-    if (lockedPieceStack.IsEmpty()) {  // REMOVE: scoreStack and clearedRowsStack checks
+    if (lockedPieceStack.IsEmpty()) {
         return;
     }
 
@@ -276,16 +279,23 @@ void Game::UndoLastLock() {
     // Set this as the current falling piece
     current = lastLockedPiece;
 
-    // RESTORE using single variables instead of stacks:
-    score = previousScore;
+    // RESTORE score using AVL - get the previous score
+    if (!previousScores.root) {
+        score = 0;  // Fallback if no previous score
+    }
+    else {
+        // Get the maximum score that is less than currentScoreBeforeLock
+        // For simplicity, we'll use the stored currentScoreBeforeLock
+        score = currentScoreBeforeLock;
+    }
+
     totalLinesCleared = previousLinesCleared;
 
     // Update ghost piece
     UpdateGhostPiece();
 
-    cout << "Last locked piece restored and falling from top!" << endl;
+    cout << "Last locked piece restored! Score reverted to: " << score << endl;
 }
-
 
 void Game::UndoLastLockedPiece() {
     UndoLastLock();
@@ -367,7 +377,6 @@ void Game::UpdateHardDrop() {
         isDropping = false;
         return;
     }
-    score += 2;
 }
 
 bool Game::HasCollided() {
@@ -399,11 +408,13 @@ void Game::LockPiece() {
     // Save state before locking
     SaveBoardState();
 
-	lockedPieceStack.Clear(); // Clear previous locked piece for single undo
+    // CLEAR the stack first (only keep most recent)
+    lockedPieceStack.Clear();
+
     // Save the current piece to locked piece stack
     lockedPieceStack.Push(current);
 
-    vector <Position> tiles = current.GetCellPositions();
+    vector<Position> tiles = current.GetCellPositions();
     for (Position item : tiles) {
         board.SetCell(item.ROW, item.COL, current.id);
     }
@@ -421,8 +432,8 @@ void Game::LockPiece() {
     int rowsCleared = board.ClearRows();
     if (rowsCleared > 0) {
         PlaySound(ClearSound);
-        UpdateScore(rowsCleared, 0);
-        cout << "Cleared " << rowsCleared << " rows!" << endl;
+        UpdateScore(rowsCleared);  // Keep this, but only for line clears
+        cout << "Cleared " << rowsCleared << " rows! Current score: " << score << endl;
     }
     UpdateGhostPiece();
 }
@@ -475,7 +486,6 @@ void Game::HandleInput() {
         break;
     case KEY_DOWN:
         MoveDown();
-        UpdateScore(0, 1);
         pieceMoved = true;
         break;
     case KEY_UP:
@@ -509,12 +519,15 @@ void Game::Reset() {
 
     GameOver = false;
     score = 0;
-    previousScore = 0;           // ADD THIS
-    previousLinesCleared = 0;    // ADD THIS
+    currentScoreBeforeLock = 0;
+    previousLinesCleared = 0;
+
+    // Clear and reset the AVL
+    previousScores.Clear();
+    previousScores.Insert(0);  // Start with score 0
 
     // Clear undo stack on reset
     lockedPieceStack.Clear();
-    // REMOVE: scoreStack.clear() and clearedRowsStack.clear()
 
     UpdateGhostPiece();
     totalPlayTime = 0;
@@ -524,7 +537,8 @@ void Game::Reset() {
 
     cout << "Game reset complete!" << endl;
 }
-void Game::UpdateScore(int lines, int down) {
+
+void Game::UpdateScore(int lines) {
     if (lines > 0) {
         totalLinesCleared += lines;
     }
@@ -542,7 +556,6 @@ void Game::UpdateScore(int lines, int down) {
         score += 800 + lines;
     }
 
-    score += down;
 
     // Insert into AVL tree
     scores.Insert(score);
