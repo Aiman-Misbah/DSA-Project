@@ -216,3 +216,31 @@ void Board::Print() {
         rowIndex++;
     }
 }
+
+vector<vector<int>> Board::GetBoardState() {
+    vector<vector<int>> state;
+    RowNode* current = head;
+    int rowIndex = 0;
+    while (current != NULL && rowIndex < rows) {
+        vector<int> row;
+        for (int c = 0; c < cols; c++) {
+            row.push_back(current->rowData[c]);
+        }
+        state.push_back(row);
+        current = current->next;
+        rowIndex++;
+    }
+    return state;
+}
+
+void Board::SetBoardState(const vector<vector<int>>& state) {
+    // Clear the board first
+    Initialize();
+
+    // Restore the state
+    for (int r = 0; r < state.size() && r < rows; r++) {
+        for (int c = 0; c < state[r].size() && c < cols; c++) {
+            SetCell(r, c, state[r][c]);
+        }
+    }
+}
