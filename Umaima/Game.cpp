@@ -14,10 +14,8 @@ Game::Game() : pieceQueue(5) {
     GameOver = false;
 
     score = 0;
-	currentScoreBeforeLock = 0;
+	previousScore = 0;
 	previousLinesCleared = 0;
-
-	previousScores.Insert(0); // Initialize with score 0
 
     InitAudioDevice();
     music = LoadMusicStream("Sounds/music.mp3");
@@ -249,15 +247,9 @@ void Game::Draw() {
 void Game::SaveBoardState() {
     if (GameOver || isCountingDown) return;
 
-    // Store current score and lines
-    currentScoreBeforeLock = score;
+    previousScore = score;
     previousLinesCleared = totalLinesCleared;
-
-    // ALSO save the entire board state
     previousBoardState = board.GetBoardState();
-
-    // Also insert into AVL for tracking
-    previousScores.Insert(score);
 }
 
 void Game::RestoreBoardState() {
@@ -281,21 +273,23 @@ void Game::UndoLastLock() {
     // Set this as the current falling piece
     current = lastLockedPiece;
 
-    // RESTORE score and lines
-    if (!previousScores.root) {
-        score = 0;
-    }
-    else {
-        score = currentScoreBeforeLock;
-    }
+    // ❌ REMOVE THIS COMPLEX AVL LOGIC:
+    // if (!previousScores.root) {
+    //     score = 0;
+    // } else {
+    //     score = currentScoreBeforeLock;
+    // }
 
+    // ✅ REPLACE WITH SIMPLE VARIABLE ASSIGNMENT:
+    score = previousScore;
     totalLinesCleared = previousLinesCleared;
 
     // Update ghost piece
     UpdateGhostPiece();
 
-    cout << "Last locked piece restored! Board state and score reverted." << endl;
+    cout << "Last locked piece restored! Score reverted to: " << score << endl;
 }
+
 
 void Game::UndoLastLockedPiece() {
     UndoLastLock();
@@ -519,15 +513,13 @@ void Game::Reset() {
 
     GameOver = false;
     score = 0;
-    currentScoreBeforeLock = 0;
+
+    previousScore = 0;
     previousLinesCleared = 0;
 
-    // ADD THIS LINE:
-    previousBoardState.clear();  // Clear saved board state
 
-    // Clear and reset the AVL
-    previousScores.Clear();
-    previousScores.Insert(0);
+    // Clear board state
+    previousBoardState.clear();
 
     // Clear undo stack on reset
     lockedPieceStack.Clear();
@@ -559,9 +551,6 @@ void Game::UpdateScore(int lines) {
         score += 800 + lines;
     }
 
-
-    // Insert into AVL tree
-    scores.Insert(score);
 }
 
 void Game::DisplayPieceQueue() {
