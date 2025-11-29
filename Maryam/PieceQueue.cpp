@@ -128,3 +128,13 @@ vector<Piece> PieceQueue::GetNextThree() const {
 
     return nextThree;
 }
+
+void PieceQueue::ClearAndSetPieces(const vector<Piece>& newPieces) {
+    q.clear();
+    q = newPieces;
+    // Ensure we don't exceed capacity
+    if ((int)q.size() > capacity) {
+        q.resize(capacity);
+    }
+    cout << "Queue updated - Size: " << q.size() << endl;
+}
