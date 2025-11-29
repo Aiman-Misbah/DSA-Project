@@ -250,28 +250,30 @@ void Game::SaveBoardState() {
     if (GameOver || isCountingDown) return;
 
     // Store current score and lines
-    currentScoreBeforeLock = score;           // Store current score
+    currentScoreBeforeLock = score;
     previousLinesCleared = totalLinesCleared;
+
+    // ALSO save the entire board state
+    previousBoardState = board.GetBoardState();
 
     // Also insert into AVL for tracking
     previousScores.Insert(score);
 }
 
+void Game::RestoreBoardState() {
+    board.SetBoardState(previousBoardState);
+}
+
 void Game::UndoLastLock() {
-    if (lockedPieceStack.IsEmpty()) {
+    if (lockedPieceStack.IsEmpty() || previousBoardState.empty()) {
         return;
     }
 
     // Get the last locked piece
     Piece lastLockedPiece = lockedPieceStack.Pop();
 
-    // Remove this piece from the board first
-    vector<Position> tiles = lastLockedPiece.GetCellPositions();
-    for (const Position& item : tiles) {
-        if (item.ROW >= 0 && item.ROW < 20 && item.COL >= 0 && item.COL < 15) {
-            board.SetCell(item.ROW, item.COL, 0); // Clear the cell
-        }
-    }
+    // RESTORE THE ENTIRE BOARD STATE (this will restore any cleared lines)
+    RestoreBoardState();
 
     // Reset the piece to top position to make it fall again
     UndoStack::ResetPieceToTop(lastLockedPiece);
@@ -279,13 +281,11 @@ void Game::UndoLastLock() {
     // Set this as the current falling piece
     current = lastLockedPiece;
 
-    // RESTORE score using AVL - get the previous score
+    // RESTORE score and lines
     if (!previousScores.root) {
-        score = 0;  // Fallback if no previous score
+        score = 0;
     }
     else {
-        // Get the maximum score that is less than currentScoreBeforeLock
-        // For simplicity, we'll use the stored currentScoreBeforeLock
         score = currentScoreBeforeLock;
     }
 
@@ -294,7 +294,7 @@ void Game::UndoLastLock() {
     // Update ghost piece
     UpdateGhostPiece();
 
-    cout << "Last locked piece restored! Score reverted to: " << score << endl;
+    cout << "Last locked piece restored! Board state and score reverted." << endl;
 }
 
 void Game::UndoLastLockedPiece() {
@@ -522,9 +522,12 @@ void Game::Reset() {
     currentScoreBeforeLock = 0;
     previousLinesCleared = 0;
 
+    // ADD THIS LINE:
+    previousBoardState.clear();  // Clear saved board state
+
     // Clear and reset the AVL
     previousScores.Clear();
-    previousScores.Insert(0);  // Start with score 0
+    previousScores.Insert(0);
 
     // Clear undo stack on reset
     lockedPieceStack.Clear();
