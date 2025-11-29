@@ -11,9 +11,13 @@ Game::Game() : pieceQueue(5) {
 
     // Use piece queue for ALL pieces
     current = pieceQueue.Dequeue();
-
     GameOver = false;
+
     score = 0;
+	previousScore = 0;
+	previousLinesCleared = 0;
+
+
     InitAudioDevice();
     music = LoadMusicStream("Sounds/music.mp3");
     musicOn = true;
@@ -245,12 +249,13 @@ void Game::SaveBoardState() {
     if (GameOver || isCountingDown) return;
 
     // Save current score state
-    scoreStack.push_back(score);
-    clearedRowsStack.push_back(totalLinesCleared);
+	previousScore = score;
+    previousLinesCleared = totalLinesCleared;
+
 }
 
 void Game::UndoLastLock() {
-    if (lockedPieceStack.IsEmpty() || scoreStack.empty() || clearedRowsStack.empty()) {
+    if (lockedPieceStack.IsEmpty()) {  // REMOVE: scoreStack and clearedRowsStack checks
         return;
     }
 
@@ -271,18 +276,16 @@ void Game::UndoLastLock() {
     // Set this as the current falling piece
     current = lastLockedPiece;
 
-    // Restore previous score and lines cleared
-    score = scoreStack.back();
-    scoreStack.pop_back();
-
-    totalLinesCleared = clearedRowsStack.back();
-    clearedRowsStack.pop_back();
+    // RESTORE using single variables instead of stacks:
+    score = previousScore;
+    totalLinesCleared = previousLinesCleared;
 
     // Update ghost piece
     UpdateGhostPiece();
 
     cout << "Last locked piece restored and falling from top!" << endl;
 }
+
 
 void Game::UndoLastLockedPiece() {
     UndoLastLock();
@@ -396,6 +399,7 @@ void Game::LockPiece() {
     // Save state before locking
     SaveBoardState();
 
+	lockedPieceStack.Clear(); // Clear previous locked piece for single undo
     // Save the current piece to locked piece stack
     lockedPieceStack.Push(current);
 
@@ -505,11 +509,12 @@ void Game::Reset() {
 
     GameOver = false;
     score = 0;
+    previousScore = 0;           // ADD THIS
+    previousLinesCleared = 0;    // ADD THIS
 
-    // Clear undo stacks on reset
+    // Clear undo stack on reset
     lockedPieceStack.Clear();
-    scoreStack.clear();
-    clearedRowsStack.clear();
+    // REMOVE: scoreStack.clear() and clearedRowsStack.clear()
 
     UpdateGhostPiece();
     totalPlayTime = 0;
@@ -519,7 +524,6 @@ void Game::Reset() {
 
     cout << "Game reset complete!" << endl;
 }
-
 void Game::UpdateScore(int lines, int down) {
     if (lines > 0) {
         totalLinesCleared += lines;
