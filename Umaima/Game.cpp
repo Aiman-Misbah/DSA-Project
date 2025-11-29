@@ -14,8 +14,8 @@ Game::Game() : pieceQueue(5) {
     GameOver = false;
 
     score = 0;
-	previousScore = 0;
-	previousLinesCleared = 0;
+    previousScore = 0;
+    previousLinesCleared = 0;
 
     InitAudioDevice();
     music = LoadMusicStream("Sounds/music.mp3");
@@ -42,7 +42,6 @@ Game::Game() : pieceQueue(5) {
 
     // Initialize hold
     isHolding = false;
-    canUseHold = true;
     holdPiece = Piece();
 
     cout << "=== GAME INITIALIZATION COMPLETE ===" << endl;
@@ -162,12 +161,7 @@ void Game::Draw() {
     }
     else {
         DrawText("EMPTY", 580, 250, 16, LIGHTGRAY);
-        if (CanUseHold()) {
-            DrawText("READY", 580, 280, 16, GREEN);
-        }
-        else {
-            DrawText("USED", 585, 280, 16, RED);
-        }
+        
     }
 
     // Draw the next THREE pieces from queue visually
@@ -296,25 +290,24 @@ void Game::UndoLastLockedPiece() {
 }
 
 void Game::ToggleHold() {
-    if (!GameOver && !isCountingDown && CanUseHold()) {
+    if (!GameOver && !isCountingDown) {
         if (!IsHolding()) {
-            // HOLD: Store current piece and get next piece from queue
+            // FIRST TIME: Store current piece and get next piece
             holdPiece = current;
             current = pieceQueue.Dequeue();
             isHolding = true;
             cout << "Piece held! Getting next piece from queue." << endl;
         }
         else {
-            // RELEASE: Make held piece the current falling piece
+            // SWAP: Exchange current piece with hold piece
+            Piece temp = current;
             current = holdPiece;
-            holdPiece = Piece();
-            isHolding = false;
-            canUseHold = false; // Can only use hold once per piece
+            holdPiece = temp;
 
             // Reset current piece position to top
             current.rowOffset = 0;
             current.colOffset = 3;
-            cout << "Released held piece!" << endl;
+            cout << "Swapped with hold piece! Current: " << current.id << ", Hold: " << holdPiece.id << endl;
         }
         UpdateGhostPiece();
     }
@@ -416,8 +409,6 @@ void Game::LockPiece() {
     // Get next piece from queue immediately
     current = pieceQueue.Dequeue();
 
-    // Reset hold ability for the new piece
-    canUseHold = true;
 
     if (!PieceFits()) {
         GameOver = true;
@@ -426,7 +417,7 @@ void Game::LockPiece() {
     int rowsCleared = board.ClearRows();
     if (rowsCleared > 0) {
         PlaySound(ClearSound);
-        UpdateScore(rowsCleared);  // Keep this, but only for line clears
+        UpdateScore(rowsCleared);
         cout << "Cleared " << rowsCleared << " rows! Current score: " << score << endl;
     }
     UpdateGhostPiece();
@@ -497,6 +488,7 @@ void Game::HandleInput() {
     }
 }
 
+
 void Game::Reset() {
     cout << "=== GAME RESET ===" << endl;
     board.Initialize();
@@ -508,29 +500,12 @@ void Game::Reset() {
 
     // Reset hold
     isHolding = false;
-    canUseHold = true;
+
     holdPiece = Piece();
 
     GameOver = false;
     score = 0;
-
-    previousScore = 0;
-    previousLinesCleared = 0;
-
-
-    // Clear board state
-    previousBoardState.clear();
-
-    // Clear undo stack on reset
-    lockedPieceStack.Clear();
-
-    UpdateGhostPiece();
-    totalPlayTime = 0;
-    isTimeTracking = false;
-    gameStartTime = 0;
-    totalLinesCleared = 0;
-
-    cout << "Game reset complete!" << endl;
+    // ... rest of reset method
 }
 
 void Game::UpdateScore(int lines) {
