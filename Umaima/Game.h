@@ -50,6 +50,7 @@ private:
 
     // Piece Queue for next pieces
     PieceQueue pieceQueue;
+    vector<Piece> previousPieceQueue;
 
     // Hold functionality
     void ToggleHold();
