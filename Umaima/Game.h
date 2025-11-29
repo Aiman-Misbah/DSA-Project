@@ -3,7 +3,7 @@
 #include "Board.h"
 #include "Pieces.cpp"
 #include "LinkedList.h"
-#include "ScoreAVL.h"  // ADD: Include AVL tree
+#include "ScoreAVL.h"
 #include "UndoStack.h"
 #include "PieceQueue.h"
 #include <vector>
@@ -15,7 +15,6 @@ private:
     Board board;
     LinkedList pieceBag;
     Piece current;
-    Piece next;
     bool HasCollided();
     void RotatePiece();
     void LockPiece();
@@ -27,21 +26,33 @@ private:
     Piece GetRandomPiece();
     Sound RotateSound;
     Sound ClearSound;
-    double countdownStartTime;      // YOUR: Countdown timer
-    bool isCountingDown;            // YOUR: Countdown state
-    int countdownNumber;            // YOUR: Countdown number
-    Piece ghostPiece;               // YOUR: Ghost piece
-    void UpdateGhostPiece();        // YOUR: Update ghost
+    double countdownStartTime;
+    bool isCountingDown;
+    int countdownNumber;
+    Piece ghostPiece;
+    void UpdateGhostPiece();
     double gameStartTime;
     double totalPlayTime;
     bool isTimeTracking;
     double lastPauseTime;
     int totalLinesCleared;
 
-    UndoStack undoStack;
+    // Undo functionality for last locked piece
+    UndoStack lockedPieceStack;
+    vector<int> clearedRowsStack;
+    vector<int> scoreStack;
+
+    void SaveBoardState();
+    void UndoLastLock();
+
+    // Piece Queue for next pieces
     PieceQueue pieceQueue;
-    void SaveUndoState();
-    void UndoMove();
+
+    // Hold functionality
+    void ToggleHold();
+    Piece holdPiece;
+    bool isHolding;
+    bool canUseHold;
 
 public:
     Game();
@@ -49,23 +60,35 @@ public:
     void HandleInput();
     void MoveDown();
     bool GameOver;
-    int score;                      // KEEP: Your score variable name
-    ScoreAVL scores;                // ADD: AVL tree for scores
+    int score;
+    ScoreAVL scores;
     ~Game();
     Music music;
     bool musicOn;
     void ToggleMusic();
-    void StartCountdown();          // YOUR: Countdown methods
+    void StartCountdown();
     void UpdateCountdown();
     bool IsCountingDown() const { return isCountingDown; }
     int GetCountdownNumber() const { return countdownNumber; }
     void ToggleGhostPiece() { showGhost = !showGhost; }
-    bool showGhost;                 // YOUR: Ghost piece toggle
-    void HardDrop();                // YOUR: Hard drop
-    bool isDropping;                // YOUR: Drop state
-    void UpdateHardDrop();          // YOUR: Update hard drop
+    bool showGhost;
+    void HardDrop();
+    bool isDropping;
+    void UpdateHardDrop();
     double GetPlayTime() const;
     void StartTimeTracking();
     void StopTimeTracking();
-    int GetTotalLinesCleared() const{ return totalLinesCleared;  }
+    int GetTotalLinesCleared() const { return totalLinesCleared; }
+
+    // Public undo method for last locked piece
+    void UndoLastLockedPiece();
+
+    // Method to display piece queue
+    void DisplayPieceQueue();
+
+    // Hold methods
+    void ToggleHoldPiece();
+    bool IsHolding() const { return isHolding; }
+    bool CanUseHold() const { return canUseHold; }
+    Piece GetHoldPiece() const { return holdPiece; }
 };
