@@ -6,9 +6,7 @@ using namespace std;
 
 class PieceQueue {
 private:
-    
-    
-    
+
     vector<Piece> q;
     int capacity;
 
@@ -39,4 +37,7 @@ public:
 
     // NEW: Get the next three pieces for display
     vector<Piece> GetNextThree() const;
+
+	vector<Piece> GetAllPieces() const { return q; }  // Get copy of all pieces
+	void ClearAndSetPieces(const vector<Piece>& newPieces);  // Set the queue
 };
