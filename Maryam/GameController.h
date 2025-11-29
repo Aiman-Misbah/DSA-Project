@@ -3,6 +3,8 @@
 #include "Piece.h"
 #include "PieceQueue.h"
 #include "UndoStack.h"
+#include <iostream>
+using namespace std;
 
 class GameController {
 private:
