@@ -55,9 +55,8 @@ private:
     void ToggleHold();
     Piece holdPiece;
     bool isHolding;
-    bool canUseHold;
 
-	vector<vector<int>> previousBoardState; // For undoing last locked piece
+    vector<vector<int>> previousBoardState; // For undoing last locked piece
 
     void RestoreBoardState();
 
@@ -95,6 +94,6 @@ public:
     // Hold methods
     void ToggleHoldPiece();
     bool IsHolding() const { return isHolding; }
-    bool CanUseHold() const { return canUseHold; }
+    bool CanUseHold() const { return true; }
     Piece GetHoldPiece() const { return holdPiece; }
 };
