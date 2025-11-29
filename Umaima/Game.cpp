@@ -443,7 +443,7 @@ void Game::HandleInput() {
     bool pieceMoved = false;
 
     // Handle Ctrl+Z for undoing last locked piece
-    if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Z)) {
+    if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_Z)) {
         UndoLastLock();
         pieceMoved = true;
     }
