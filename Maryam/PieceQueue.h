@@ -1,10 +1,15 @@
 #pragma once
 #include <vector>
 #include "Piece.h"
+#include <iostream>
+using namespace std;
 
 class PieceQueue {
 private:
-    std::vector<Piece> q;
+    
+    
+    
+    vector<Piece> q;
     int capacity;
 
     // helper: create a random concrete piece (implemented in cpp)
@@ -33,5 +38,5 @@ public:
     void DisplayNextThree() const;
 
     // NEW: Get the next three pieces for display
-    std::vector<Piece> GetNextThree() const;
+    vector<Piece> GetNextThree() const;
 };
