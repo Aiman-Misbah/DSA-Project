@@ -20,7 +20,7 @@ private:
     void LockPiece();
     bool PieceFits();
     void Reset();
-    void UpdateScore(int lines, int down);
+    void UpdateScore(int lines);
     void MoveLeft();
     void MoveRight();
     Piece GetRandomPiece();
@@ -38,9 +38,12 @@ private:
     int totalLinesCleared;
 
     // Undo functionality for last locked piece
-    UndoStack lockedPieceStack{ 1 }; // Only keep most recent piece
-    int previousScore; // Store previous score
-    int previousLinesCleared; // Store previous lines count;
+    UndoStack lockedPieceStack{ 1 };
+    ScoreAVL previousScores;        // Store previous scores in AVL
+    int previousLinesCleared;
+    int currentScoreBeforeLock;     // Store score right before locking
+
+
 
     void SaveBoardState();
     void UndoLastLock();
