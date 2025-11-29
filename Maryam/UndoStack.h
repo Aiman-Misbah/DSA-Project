@@ -1,10 +1,14 @@
 #pragma once
 #include <vector>
 #include "Piece.h"
+#include <iostream>
+using namespace std;
 
 class UndoStack {
 private:
-    std::vector<Piece> stack;
+    
+    
+    vector<Piece> stack;
     int capacity;
 
 public:
