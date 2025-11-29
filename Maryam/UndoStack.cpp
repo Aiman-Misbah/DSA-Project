@@ -1,6 +1,7 @@
 #pragma once
 #include "UndoStack.h"
 #include <iostream>
+using namespace std;
 
 UndoStack::UndoStack(int cap) : capacity(cap) {
     stack.reserve(capacity);
