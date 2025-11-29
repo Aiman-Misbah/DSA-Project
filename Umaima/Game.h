@@ -57,6 +57,10 @@ private:
     bool isHolding;
     bool canUseHold;
 
+	vector<vector<int>> previousBoardState; // For undoing last locked piece
+
+    void RestoreBoardState();
+
 public:
     Game();
     void Draw();
