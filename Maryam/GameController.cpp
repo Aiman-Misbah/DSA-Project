@@ -3,6 +3,7 @@
 #include "Pieces.cpp"   // ensure concrete piece constructors are available
 #include <vector>
 #include <iostream>
+using namespace std;
 
 GameController::GameController(Board* b, int queueSize, int undoCapacity)
     : board(b), queue(queueSize), undo(undoCapacity), canHold(true) {
@@ -30,7 +31,10 @@ void GameController::SpawnNextPiece() {
 bool GameController::IsValidPosition(const Piece& candidate) const {
     Piece temp = candidate;
     // check if any tile collides with board
-    std::vector<Position> tiles = temp.GetCellPositions();
+    
+    
+    
+    vector<Position> tiles = temp.GetCellPositions();
     for (const Position& p : tiles) {
         if (board->CollisionDetected(p.ROW, p.COL)) return false;
     }
@@ -82,17 +86,17 @@ void GameController::Rotate() {
 // NEW: Hold current piece functionality
 void GameController::HoldCurrentPiece() {
     if (!canHold) {
-        std::cout << "Cannot hold - already used hold this turn!" << std::endl;
+        cout << "Cannot hold - already used hold this turn!" << endl;
         return;
     }
 
-    std::cout << "Holding current piece..." << std::endl;
+    cout << "Holding current piece..." << endl;
 
     if (!HasHoldPiece()) {
         // First time holding - just store current piece and get next one
         holdPiece = current;
         SpawnNextPiece();
-        std::cout << "Stored piece in hold. ID: " << holdPiece.id << std::endl;
+        cout << "Stored piece in hold. ID: " << holdPiece.id << endl;
     }
     else {
         // Swap current piece with hold piece
@@ -103,7 +107,7 @@ void GameController::HoldCurrentPiece() {
         // Reset current piece position to top
         current.rowOffset = 0;
         current.colOffset = 3;
-        std::cout << "Swapped with hold piece. Current ID: " << current.id << ", Hold ID: " << holdPiece.id << std::endl;
+        cout << "Swapped with hold piece. Current ID: " << current.id << ", Hold ID: " << holdPiece.id << endl;
     }
 
     canHold = false; // Can only hold once per piece
@@ -111,7 +115,7 @@ void GameController::HoldCurrentPiece() {
 
 int GameController::LockPieceAndSpawnNext() {
     // write current piece into board
-    std::vector<Position> tiles = current.GetCellPositions();
+    vector<Position> tiles = current.GetCellPositions();
     for (const Position& p : tiles) {
         board->SetCell(p.ROW, p.COL, current.id);
     }
@@ -121,7 +125,7 @@ int GameController::LockPieceAndSpawnNext() {
 
     // NEW: Reset hold ability after locking piece
     canHold = true;
-    std::cout << "Hold ability reset for new piece" << std::endl;
+    cout << "Hold ability reset for new piece" << endl;
 
     // clear rows and return number cleared
     int cleared = board->ClearRows();
