@@ -4,6 +4,7 @@
 #include <ctime>
 #include <iostream>
 #include <algorithm>
+using namespace std;
 
 // Include concrete piece definitions so CreateRandomPiece can construct them.
 #include "Pieces.cpp"
@@ -75,51 +76,51 @@ void PieceQueue::Clear() {
 
 // Display next three pieces in console
 void PieceQueue::DisplayNextThree() const {
-    std::cout << "=== NEXT 3 PIECES IN QUEUE ===" << std::endl;
+    cout << "=== NEXT 3 PIECES IN QUEUE ===" << endl;
 
     if (q.empty()) {
-        std::cout << "Queue is empty!" << std::endl;
+        cout << "Queue is empty!" << endl;
         return;
     }
 
     // Display up to 3 pieces or whatever is available
-    int displayCount = std::min(3, (int)q.size());
+    int displayCount = min(3, (int)q.size());
 
     for (int i = 0; i < displayCount; i++) {
-        std::cout << i + 1 << ". ";
+        cout << i + 1 << ". ";
 
         switch (q[i].id) {
-        case 1: std::cout << "L-Piece"; break;
-        case 2: std::cout << "J-Piece"; break;
-        case 3: std::cout << "I-Piece"; break;
-        case 4: std::cout << "O-Piece"; break;
-        case 5: std::cout << "S-Piece"; break;
-        case 6: std::cout << "T-Piece"; break;
-        case 7: std::cout << "Z-Piece"; break;
-        default: std::cout << "Unknown Piece"; break;
+        case 1: cout << "L-Piece"; break;
+        case 2: cout << "J-Piece"; break;
+        case 3: cout << "I-Piece"; break;
+        case 4: cout << "O-Piece"; break;
+        case 5: cout << "S-Piece"; break;
+        case 6: cout << "T-Piece"; break;
+        case 7: cout << "Z-Piece"; break;
+        default: cout << "Unknown Piece"; break;
         }
 
         // Display piece position info
-        std::cout << " (Position: " << q[i].rowOffset << "," << q[i].colOffset << ")";
-        std::cout << std::endl;
+        cout << " (Position: " << q[i].rowOffset << "," << q[i].colOffset << ")";
+        cout << endl;
     }
 
     if (q.size() > 3) {
-        std::cout << "... and " << (q.size() - 3) << " more pieces" << std::endl;
+        cout << "... and " << (q.size() - 3) << " more pieces" << endl;
     }
 
-    std::cout << "===============================" << std::endl;
+    cout << "===============================" << endl;
 }
 
 // Get the next three pieces for display
-std::vector<Piece> PieceQueue::GetNextThree() const {
-    std::vector<Piece> nextThree;
+vector<Piece> PieceQueue::GetNextThree() const {
+    vector<Piece> nextThree;
 
     if (q.empty()) {
         return nextThree;
     }
 
-    int displayCount = std::min(3, (int)q.size());
+    int displayCount = min(3, (int)q.size());
 
     for (int i = 0; i < displayCount; i++) {
         nextThree.push_back(q[i]);
