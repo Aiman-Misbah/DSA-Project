@@ -43,4 +43,7 @@ public:
     int ClearRows();  // This will use linked list operations
     void SetCell(int row, int col, int value);
     int GetCell(int row, int col);
+
+	vector<vector<int>> GetBoardState();
+	void SetBoardState(const vector<vector<int>>& state);
 };
