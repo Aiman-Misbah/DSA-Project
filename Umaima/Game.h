@@ -38,9 +38,9 @@ private:
     int totalLinesCleared;
 
     // Undo functionality for last locked piece
-    UndoStack lockedPieceStack;
-    vector<int> clearedRowsStack;
-    vector<int> scoreStack;
+    UndoStack lockedPieceStack{ 1 }; // Only keep most recent piece
+    int previousScore; // Store previous score
+    int previousLinesCleared; // Store previous lines count;
 
     void SaveBoardState();
     void UndoLastLock();
