@@ -3,9 +3,8 @@
 using namespace std;
 
 class Position {
-	public:
-		Position(int row, int col);
-		int ROW;
-		int COL;
+public:
+	Position(int row, int col);
+	int ROW;
+	int COL;
 };
-
