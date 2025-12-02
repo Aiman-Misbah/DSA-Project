@@ -1,4 +1,7 @@
 #include "ScoreAVL.h"
+#include <iostream>
+using namespace std;
+
 // Constructor & Destructor
 ScoreAVL::ScoreAVL() : root(NULL) {}
 ScoreAVL::~ScoreAVL() { Clear(); }
