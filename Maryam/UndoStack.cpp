@@ -44,6 +44,6 @@ int UndoStack::Size() const {
 
 // Reset piece to top position for falling effect
 void UndoStack::ResetPieceToTop(Piece& piece) {
-    piece.rowOffset = -2;  // Start above the visible board
-    piece.colOffset = 3;   // Center position
+    piece.rowOffset = -3;  // Start above the visible board
+    piece.colOffset = 5;   // Center position
 }
