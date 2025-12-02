@@ -287,9 +287,9 @@ void WelcomeScreen::DrawInstructions() {
     // Instructions content
     vector<string> instructions = {
         "CONTROLS:",
-        "← → ARROWS  : Move piece left/right",
-        "↑ ARROW     : Rotate piece",
-        "↓ ARROW     : Soft drop (move down faster)",
+        "? ? ARROWS  : Move piece left/right",
+        "? ARROW     : Rotate piece",
+        "? ARROW     : Soft drop (move down faster)",
         "SPACEBAR    : Hard drop (instant drop)",
         "",
         "GAME FEATURES:",
