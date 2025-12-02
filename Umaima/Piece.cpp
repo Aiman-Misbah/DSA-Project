@@ -17,7 +17,11 @@ Piece::Piece() {
 void Piece::Draw(int x, int y) {
     vector<Position> tiles = GetCellPositions();
     for (Position item : tiles) {
-        DrawRectangle(item.COL * size + y, item.ROW * size + x, size - 1, size - 1, colours[id]);
+        // Check if this tile is at or below row 0 (top of visible board)
+        if (item.ROW >= 0) {
+            DrawRectangle(item.COL * size + y, item.ROW * size + x,
+                size - 1, size - 1, colours[id]);
+        }
     }
 }
 
@@ -130,7 +134,21 @@ bool Piece::RotateWithWallKicks(Board& board) {
 
 Piece Piece::GetGhostPiece(Board& board) {
     Piece ghost = *this;  // Create a copy of current piece
+    // If the piece is completely above the board, don't calculate ghost yet
+    vector<Position> tiles = ghost.GetCellPositions();
+    bool isAboveBoard = true;
+    for (Position item : tiles) {
+        if (item.ROW >= 0) {
+            isAboveBoard = false;
+            break;
+        }
+    }
+    // If all tiles are above the board, return the ghost at current position
+    if (isAboveBoard) {
+        return ghost;
+    }
 
+    // Otherwise, calculate normal ghost position
     // Move ghost down until it collides
     while (!ghost.HasCollision(board)) {
         ghost.Move(1, 0);
@@ -147,8 +165,13 @@ void Piece::DrawGhost(int x, int y) {
     ghostColor.a = 80;  // Make it semi-transparent (80/255 opacity)
 
     for (Position item : tiles) {
-        DrawRectangle(item.COL * size + y, item.ROW * size + x, size - 1, size - 1, ghostColor);
-        // Optional: Draw border to make it more visible
-        DrawRectangleLines(item.COL * size + y, item.ROW * size + x, size - 1, size - 1, Fade(WHITE, 0.3f));
+        // Only draw ghost tiles that are at or below row 0
+        if (item.ROW >= 0) {
+            DrawRectangle(item.COL * size + y, item.ROW * size + x,
+                size - 1, size - 1, ghostColor);
+            // Optional: Draw border to make it more visible
+            DrawRectangleLines(item.COL * size + y, item.ROW * size + x,
+                size - 1, size - 1, Fade(WHITE, 0.3f));
+        }
     }
 }
