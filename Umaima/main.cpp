@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <ctime>
 #include "Colours.h"
+using namespace std;
 
 double lastUpdateTime = 0;
 
@@ -20,7 +21,7 @@ bool EventTriggered(double interval) {
 
 int main() {
     srand(time(0));
-    InitWindow(1000, 750, "Tetris Game");
+    InitWindow(1200, 800, "Tetris Game");
     SetTargetFPS(60);
 
     Color darkBlue = { 44,44,127,255 };
@@ -36,18 +37,22 @@ int main() {
     float ghostAnimationProgress = 1.0f;
     bool wasGhostEnabled = true;
 
+    bool restartRequested = false;
+    bool returnToMenuRequested = false;
+
     while (WindowShouldClose() == false) {
         if (!gameStarted) {
             if (showInstructions) {
                 // NEW: Instructions screen logic
                 Vector2 mouse = GetMousePosition();
                 Rectangle backBounds = { 400, 600, 200, 60 };
-                
-                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && 
+
+                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) &&
                     CheckCollisionPointRec(mouse, backBounds)) {
                     showInstructions = false;
                 }
-            } else {
+            }
+            else {
                 // Welcome screen logic
                 bool startGame = false;
                 welcomeScreen.Update(startGame, showInstructions);  // UPDATED: Pass showInstructions
@@ -69,7 +74,21 @@ int main() {
                 ghostAnimationProgress += GetFrameTime() * 5.0f;
                 if (ghostAnimationProgress > 1.0f) ghostAnimationProgress = 1.0f;
             }
-            Manager.Update(game.musicOn, gamePaused, game.IsCountingDown(), game.showGhost, ghostAnimationProgress);
+            Manager.Update(game.musicOn, gamePaused, game.IsCountingDown(), game.showGhost, ghostAnimationProgress, game.GameOver, restartRequested, returnToMenuRequested);
+
+            if (restartRequested) {
+                game.Reset();
+                game.StartCountdown();
+                restartRequested = false;
+                // Reset any other states if needed
+            }
+
+            if (returnToMenuRequested) {
+                gameStarted = false;
+                game.Reset();
+                returnToMenuRequested = false;
+                // Reset welcome screen if needed
+            }
 
             bool justResumed = previouslyPaused && !gamePaused;
             if (justResumed) {
@@ -92,6 +111,7 @@ int main() {
             }
 
             if (!gamePaused && !game.IsCountingDown()) {
+                game.UpdateMessages(GetFrameTime());
                 game.HandleInput();
 
                 if (game.isDropping) {
@@ -119,24 +139,25 @@ int main() {
             if (showInstructions) {
                 // NEW: Draw instructions screen
                 welcomeScreen.DrawInstructions();
-            } else {
+            }
+            else {
                 // Draw welcome screen
                 welcomeScreen.Draw();
             }
         }
         else {
             // Draw game (same as before)
-            Manager.Draw(game.musicOn, gamePaused, game.score, font, game.showGhost, ghostAnimationProgress, game.GetPlayTime(), game.GetTotalLinesCleared());
             game.Draw();
 
-            if (game.GameOver) {
-                DrawTextEx(font, "GAME OVER", { 320,450 }, 38, 2, WHITE);
-            }
+            Manager.Draw(game.musicOn, gamePaused, game.score, font, game.showGhost, ghostAnimationProgress, game.GetPlayTime(), game.GetTotalLinesCleared(), game.GameOver);
+
+            game.DrawMessages();
+            
 
             if (gamePaused) {
-                DrawRectangle(11, 11, 15 * 35, 20 * 35, { 0, 0, 0, 100 });
-                int boardCenterX = 11 + (15 * 35) / 2;
-                int boardCenterY = 11 + (20 * 35) / 2;
+                DrawRectangle(290, 50, 15 * 35, 20 * 35, DarkOverlay);
+                int boardCenterX = 290 + (15 * 35) / 2;
+                int boardCenterY = 50 + (20 * 35) / 2;
                 Vector2 textSize = MeasureTextEx(font, "PAUSED", 38, 2);
                 DrawTextEx(font, "PAUSED",
                     { boardCenterX - textSize.x / 2, boardCenterY - textSize.y / 2 },
@@ -144,11 +165,11 @@ int main() {
             }
 
             if (game.IsCountingDown()) {
-                DrawRectangle(11, 11, 15 * 35, 20 * 35, { 0, 0, 0, 100 });
+                DrawRectangle(290, 50, 15 * 35, 20 * 35, DarkOverlay);
                 char countdownText[2];
                 snprintf(countdownText, sizeof(countdownText), "%d", game.GetCountdownNumber());
-                int boardCenterX = 11 + (15 * 35) / 2;
-                int boardCenterY = 11 + (20 * 35) / 2;
+                int boardCenterX = 290 + (15 * 35) / 2;
+                int boardCenterY = 50 + (20 * 35) / 2;
                 Vector2 textSize = MeasureTextEx(font, countdownText, 120, 4);
                 DrawTextEx(font, countdownText,
                     { boardCenterX - textSize.x / 2, boardCenterY - textSize.y / 2 },
