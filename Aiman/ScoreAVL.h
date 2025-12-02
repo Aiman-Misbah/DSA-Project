@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 #include <iostream>
 using namespace std;
 
@@ -32,4 +31,5 @@ public:
     void Insert(int val);
     void PrintScores();   // Print all scores in ascending order
     void Clear();         // Clear all nodes
+
 };
