@@ -11,7 +11,18 @@ Game::Game() : pieceQueue(5) {
 
     // Use piece queue for ALL pieces
     current = pieceQueue.Dequeue();
-    GameOver = false;
+    current.rowOffset = 0;
+    current.colOffset = 5;
+
+    if (!PieceFits()) {
+        GameOver = true;
+    }
+    else {
+        // If it fits, move it above for drop-in effect
+        current.rowOffset = -3;
+        GameOver = false;
+    }
+
 
     score = 0;
     previousScore = 0;
@@ -132,112 +143,135 @@ void Game::UpdateGhostPiece() {
 }
 
 void Game::Draw() {
+    // Draw the game board (centered)
     board.Draw();
+
     if (showGhost) {
-        ghostPiece.DrawGhost(11, 11);
+        ghostPiece.DrawGhost(50, 290);
     }
-    current.Draw(11, 11);
+    current.Draw(50, 290);
 
-    // Draw hold piece area
-    DrawRectangleRounded({ 550, 215, 150, 120 }, 0.3f, 6, Color{ 59, 85, 162, 255 });
-    DrawText("HOLD", 580, 180, 20, WHITE);
+    // ============ LEFT PANEL ============
+    // Hold Area (Top-left) - X: 50, Y: 100
+    DrawRectangleRounded({ 50, 100, 200, 140 }, 0.3f, 6, PanelBlue);
+    DrawText("HOLD", 110, 70, 24, WHITE);
 
-    // Draw hold piece if currently holding
+    // For HOLD piece (simpler version):
     if (IsHolding()) {
         Piece tempHold = GetHoldPiece();
         tempHold.rowOffset = 0;
         tempHold.colOffset = 0;
 
-        // Draw hold piece with smaller size
         int holdCellSize = 25;
         vector<Position> tiles = tempHold.GetCellPositions();
+
+        // Find min/max for centering
+        int minRow = 100, maxRow = -100;
+        int minCol = 100, maxCol = -100;
+        for (const Position& item : tiles) {
+            if (item.ROW < minRow) minRow = item.ROW;
+            if (item.ROW > maxRow) maxRow = item.ROW;
+            if (item.COL < minCol) minCol = item.COL;
+            if (item.COL > maxCol) maxCol = item.COL;
+        }
+
+        int pieceWidth = maxCol - minCol + 1;
+        int pieceHeight = maxRow - minRow + 1;
+
+        // Center in hold box (200x140 at 50,100)
+        int drawX = 150 - (pieceWidth * holdCellSize) / 2;  // 150 is center X
+        int drawY = 170 - (pieceHeight * holdCellSize) / 2; // 170 is center Y
+
+        // Adjust for I-piece
+        if (tempHold.id == 3) {
+            drawX -= 5;
+            drawY += 5;
+        }
+        // Adjust for O-piece
+        else if (tempHold.id == 4) {
+            drawY += 5;
+        }
+
         for (Position item : tiles) {
-            DrawRectangle(item.COL * holdCellSize + 590,
-                item.ROW * holdCellSize + 250,
+            DrawRectangle((item.COL - minCol) * holdCellSize + drawX,
+                (item.ROW - minRow) * holdCellSize + drawY,
                 holdCellSize - 1, holdCellSize - 1,
                 tempHold.colours[tempHold.id]);
         }
-
-        // Show hold status
-        DrawText("HOLDING", 575, 280, 16, YELLOW);
+        DrawText("HOLDING", 100, 215, 18, YELLOW);
     }
     else {
-        DrawText("EMPTY", 580, 250, 16, LIGHTGRAY);
-        
+        DrawText("EMPTY", 110, 160, 20, LIGHTGRAY);
     }
 
-    // Draw the next THREE pieces from queue visually
+    // Controls Help (Bottom-left) - X: 50, Y: 500
+    DrawRectangleRounded({ 50, 500, 200, 150 }, 0.3f, 6, PanelBlue);
+    DrawText("CONTROLS", 80, 470, 20, WHITE);
+    DrawText("H = Hold", 70, 520, 16, WHITE);
+    DrawText("Space = Hard Drop", 70, 550, 16, WHITE);
+    DrawText("Ctrl+Z = Undo", 70, 580, 16, WHITE);
+    DrawText("Q = Queue Info", 70, 610, 16, WHITE);
+
+    // ============ RIGHT PANEL ============
+    // Next Pieces (Top-right) - X: 850, Y: 100
+    DrawRectangleRounded({ 850, 100, 300, 320 }, 0.3f, 6, PanelBlue);
+    DrawText("NEXT PIECES", 900, 70, 24, WHITE);
+
     vector<Piece> nextThree = pieceQueue.GetNextThree();
 
-    // Draw background for next pieces area
-    DrawRectangleRounded({ 720, 215, 170, 360 }, 0.3f, 6, Color{ 59, 85, 162, 255 });
-
-    // Draw title
-    DrawText("NEXT PIECES", 730, 180, 20, WHITE);
-
-    // Draw each of the next three pieces in different positions
+    // Draw each next piece vertically stacked
+    // Draw each next piece vertically stacked
     for (int i = 0; i < nextThree.size() && i < 3; i++) {
-        int yOffset = 230 + (i * 120); // Space them vertically
+        int yOffset = 140 + (i * 100); // Space them vertically
 
-        // Draw label for each piece
-        DrawText(TextFormat("Next %d:", i + 1), 730, yOffset - 25, 18, WHITE);
+        // Draw label
+        DrawText(TextFormat("Piece %d:", i + 1), 860, yOffset - 10, 18, WHITE);
 
-        // Create a temporary piece for drawing with smaller size
+        // Create temporary piece for drawing
         Piece tempPiece = nextThree[i];
         tempPiece.rowOffset = 0;
         tempPiece.colOffset = 0;
 
-        // Set smaller size for preview pieces (25px instead of 35px)
         int previewCellSize = 25;
+        vector<Position> tiles = tempPiece.GetCellPositions();
 
-        // Adjust position for each piece type to center them properly
-        int xPos, yPos;
-
-        // Special positioning for different piece types
-        switch (tempPiece.id) {
-        case 1: // L-Piece
-            xPos = 770;
-            yPos = yOffset + 15;
-            break;
-        case 2: // J-Piece
-            xPos = 770;
-            yPos = yOffset + 15;
-            break;
-        case 3: // I-Piece (long piece)
-            xPos = 750;
-            yPos = yOffset + 20;
-            break;
-        case 4: // O-Piece (square)
-            xPos = 770;
-            yPos = yOffset + 5;
-            break;
-        case 5: // S-Piece
-            xPos = 770;
-            yPos = yOffset + 15;
-            break;
-        case 6: // T-Piece
-            xPos = 770;
-            yPos = yOffset + 15;
-            break;
-        case 7: // Z-Piece
-            xPos = 770;
-            yPos = yOffset + 15;
-            break;
-        default:
-            xPos = 760;
-            yPos = yOffset + 10;
-            break;
+        // Find min/max for centering
+        int minRow = 100, maxRow = -100;
+        int minCol = 100, maxCol = -100;
+        for (const Position& item : tiles) {
+            if (item.ROW < minRow) minRow = item.ROW;
+            if (item.ROW > maxRow) maxRow = item.ROW;
+            if (item.COL < minCol) minCol = item.COL;
+            if (item.COL > maxCol) maxCol = item.COL;
         }
 
-        // Draw the piece preview with smaller size
-        vector<Position> tiles = tempPiece.GetCellPositions();
+        int pieceWidth = maxCol - minCol + 1;
+        int pieceHeight = maxRow - minRow + 1;
+
+        // Center in each slot (300px wide box starting at X=850)
+        // Each slot is roughly 100px tall, centered at yOffset + 50
+        int drawX = 1000 - (pieceWidth * previewCellSize) / 2;  // 1000 is center X (850 + 300/2)
+        int drawY = (yOffset + 40) - (pieceHeight * previewCellSize) / 2; // Center of 100px slot
+
+        // Adjust for I-piece
+        if (tempPiece.id == 3) {
+            drawX -= 5;
+            drawY += 5;
+        }
+        // Adjust for O-piece
+        else if (tempPiece.id == 4) {
+            drawY += 5;
+        }
+
         for (Position item : tiles) {
-            DrawRectangle(item.COL * previewCellSize + xPos,
-                item.ROW * previewCellSize + yPos,
+            DrawRectangle((item.COL - minCol) * previewCellSize + drawX,
+                (item.ROW - minRow) * previewCellSize + drawY,
                 previewCellSize - 1, previewCellSize - 1,
                 tempPiece.colours[tempPiece.id]);
         }
     }
+    // Game Controls (Bottom-right) - X: 850, Y: 460
+    // This will be drawn by Manager
 }
 
 void Game::SaveBoardState() {
@@ -275,6 +309,10 @@ void Game::UndoLastLock() {
     // Reset the piece to top position to make it fall again
     UndoStack::ResetPieceToTop(lastLockedPiece);
 
+    // ADD THIS LINE to also set it above the board:
+    lastLockedPiece.rowOffset = -3;
+    lastLockedPiece.colOffset = 5;
+
     // Set this as the current falling piece
     current = lastLockedPiece;
 
@@ -300,6 +338,19 @@ void Game::ToggleHold() {
             // FIRST TIME: Store current piece and get next piece
             holdPiece = current;
             current = pieceQueue.Dequeue();
+
+            // Check if new piece fits before spawning above
+            current.rowOffset = 0;  // Test at row 0 first
+            current.colOffset = 5;
+
+            if (!PieceFits()) {
+                GameOver = true;
+            }
+            else {
+                // If it fits, move it above for drop-in effect
+                current.rowOffset = -3;
+            }
+
             isHolding = true;
             cout << "Piece held! Getting next piece from queue." << endl;
         }
@@ -309,9 +360,18 @@ void Game::ToggleHold() {
             current = holdPiece;
             holdPiece = temp;
 
-            // Reset current piece position to top
-            current.rowOffset = 0;
-            current.colOffset = 3;
+            // Check if swapped piece fits before spawning above
+            current.rowOffset = 0;  // Test at row 0 first
+            current.colOffset = 5;
+
+            if (!PieceFits()) {
+                GameOver = true;
+            }
+            else {
+                // If it fits, move it above for drop-in effect
+                current.rowOffset = -3;
+            }
+
             cout << "Swapped with hold piece! Current: " << current.id << ", Hold: " << holdPiece.id << endl;
         }
         UpdateGhostPiece();
@@ -411,23 +471,34 @@ void Game::LockPiece() {
         board.SetCell(item.ROW, item.COL, current.id);
     }
 
-    // Get next piece from queue immediately
-    current = pieceQueue.Dequeue();
-
-
-    if (!PieceFits()) {
-        GameOver = true;
-    }
-
     int rowsCleared = board.ClearRows();
     if (rowsCleared > 0) {
         PlaySound(ClearSound);
         UpdateScore(rowsCleared);
         cout << "Cleared " << rowsCleared << " rows! Current score: " << score << endl;
+        
+        AddLineClearMessage(rowsCleared);
     }
+
+
+    // Get next piece from queue
+    current = pieceQueue.Dequeue();
+
+    // CHECK FOR GAME OVER BEFORE spawning above
+    // Test if the piece would fit at spawn position (row 0)
+    current.rowOffset = 0;  // Test at row 0 first
+    current.colOffset = 5;
+
+    if (!PieceFits()) {
+        GameOver = true;
+    }
+    else {
+        // If it fits, move it above the board for the drop-in effect
+        current.rowOffset = -3;
+    }
+
     UpdateGhostPiece();
 }
-
 bool Game::PieceFits() {
     vector<Position> tiles = current.GetCellPositions();
     for (Position item : tiles) {
@@ -501,6 +572,8 @@ void Game::Reset() {
     pieceQueue.Clear();
     pieceQueue.FillStartup();
     current = pieceQueue.Dequeue();
+    current.rowOffset = -3;
+    current.colOffset = 5;
 
     // Reset hold
     isHolding = false;
@@ -550,4 +623,93 @@ void Game::UpdateScore(int lines) {
 
 void Game::DisplayPieceQueue() {
     pieceQueue.DisplayNextThree();
+}
+
+// Add this after other methods, before Draw()
+
+void Game::AddLineClearMessage(int linesCleared) {
+
+    if (linesCleared <= 0) return;
+
+    LineClearMessage msg;
+    msg.isActive = true;
+    msg.displayTime = 0.0f;
+    msg.duration = 2.0f; // Show for 2 seconds
+
+    // Custom messages for different line clears
+    switch (linesCleared) {
+    case 1:
+        msg.text = "SINGLE!";
+        msg.color = RED;
+        break;
+    case 2:
+        msg.text = "DOUBLE!!";
+        msg.color = GREEN;
+        break;
+    case 3:
+        msg.text = "TRIPLE!!!";
+        msg.color = YELLOW;
+        break;
+    case 4:
+        msg.text = "TETRIS!!!!";
+        msg.color = ORANGE;
+        break;
+    default:
+        msg.text = TextFormat("MEGA %d LINES!", linesCleared);
+        msg.color = PURPLE;
+
+        break;
+    }
+
+    activeMessages.push_back(msg);
+}
+
+void Game::UpdateMessages(float deltaTime) {
+    // Update all active messages
+    for (auto& msg : activeMessages) {
+        if (msg.isActive) {
+            msg.displayTime += deltaTime;
+            if (msg.displayTime >= msg.duration) {
+                msg.isActive = false;
+            }
+        }
+    }
+
+    // Remove inactive messages
+    activeMessages.erase(
+        std::remove_if(activeMessages.begin(), activeMessages.end(),
+            [](const LineClearMessage& msg) { return !msg.isActive; }),
+        activeMessages.end()
+    );
+}
+
+void Game::DrawMessages() {
+    // Draw all active messages on top of the board
+    int boardX = 290;
+    int boardY = 50;
+    int boardWidth = 15 * 35;
+    int boardHeight = 20 * 35;
+
+    for (const auto& msg : activeMessages) {
+        if (!msg.isActive) continue;
+
+        // Calculate position (center of board)
+        int centerX = boardX + boardWidth / 2;
+        int centerY = boardY + boardHeight / 2;
+
+        // Calculate alpha (fade out effect)
+        float progress = msg.displayTime / msg.duration;
+        float alpha = 1.0f - progress; // Fade from 1.0 to 0.0
+        Color textColor = msg.color;
+        textColor.a = static_cast<unsigned char>(alpha * 255);
+
+        // Calculate font size (pulse effect)
+        int fontSize = 30 + static_cast<int>(10 * sin(msg.displayTime * 5.0f));
+
+        // Draw text
+        Vector2 textSize = MeasureTextEx(GetFontDefault(), msg.text.c_str(), fontSize, 2);
+        DrawTextEx(GetFontDefault(), msg.text.c_str(),
+            { centerX - textSize.x / 2, centerY - textSize.y / 2 },
+            fontSize, 2, textColor);
+    }
 }
