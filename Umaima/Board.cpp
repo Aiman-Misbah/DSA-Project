@@ -79,7 +79,7 @@ void Board::Draw() {
     while (current != NULL && rowIndex < rows) {
         for (int j = 0; j < cols; j++) {
             int cellVal = current->rowData[j];
-            DrawRectangle(j * cell + 11, rowIndex * cell + 11, cell - 1, cell - 1, colours[cellVal]);
+            DrawRectangle(j * cell + 290, rowIndex * cell + 50, cell - 1, cell - 1, colours[cellVal]);
         }
         current = current->next;
         rowIndex++;
