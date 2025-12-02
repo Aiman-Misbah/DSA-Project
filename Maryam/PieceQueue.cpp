@@ -4,7 +4,7 @@
 #include <ctime>
 #include <iostream>
 #include <algorithm>
-using namespace std;
+using namespace std; 
 
 // Include concrete piece definitions so CreateRandomPiece can construct them.
 #include "Pieces.cpp"
