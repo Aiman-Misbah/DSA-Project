@@ -15,4 +15,7 @@ extern const Color Blue;
 extern const Color LightBlue;
 extern const Color DarkBlue;
 
+extern const Color PanelBlue;
+extern const Color DarkOverlay;
+
 vector<Color> GetCellColours();
