@@ -19,7 +19,6 @@ private:
     void RotatePiece();
     void LockPiece();
     bool PieceFits();
-    void Reset();
     void UpdateScore(int lines);
     void MoveLeft();
     void MoveRight();
@@ -61,6 +60,19 @@ private:
 
     void RestoreBoardState();
 
+    struct LineClearMessage {
+        std::string text;
+        float displayTime;
+        float duration;
+        Color color;
+        bool isActive;
+    };
+
+    vector<LineClearMessage> activeMessages;
+    float messageTime;
+
+    void AddLineClearMessage(int linesCleared);
+
 public:
     Game();
     void Draw();
@@ -97,4 +109,8 @@ public:
     bool IsHolding() const { return isHolding; }
     bool CanUseHold() const { return true; }
     Piece GetHoldPiece() const { return holdPiece; }
+
+    void UpdateMessages(float deltaTime);
+    void DrawMessages();
+    void Reset();
 };
