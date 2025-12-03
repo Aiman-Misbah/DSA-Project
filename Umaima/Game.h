@@ -62,11 +62,11 @@ private:
     void RestoreBoardState();
 
     struct LineClearMessage {
-        std::string text;
-        float displayTime;
-        float duration;
-        Color color;
-        bool isActive;
+        string text;
+        float displayTime = 0.0f;
+        float duration = 2.0f;
+        Color color = WHITE;
+        bool isActive = false;
     };
 
     vector<LineClearMessage> activeMessages;
