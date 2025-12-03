@@ -62,7 +62,7 @@ private:
     void RestoreBoardState();
 
     struct LineClearMessage {
-        string text;
+        std::string text;
         float displayTime;
         float duration;
         Color color;
@@ -104,6 +104,7 @@ public:
     // Public undo method for last locked piece
     void UndoLastLockedPiece();
 
+
     // Hold methods
     void ToggleHoldPiece();
     bool IsHolding() const { return isHolding; }
@@ -115,4 +116,7 @@ public:
     void Reset();
 
     Leaderboard& GetLeaderboard() { return leaderboard; }
+
+    // In Game.h public section:
+    const PieceQueue& GetPieceQueue() const { return pieceQueue; }
 };
