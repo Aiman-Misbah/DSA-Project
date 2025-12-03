@@ -625,7 +625,6 @@ void Manager::DrawNextPiecesPanel(const PieceQueue& pieceQueue) {
             if (item.COL < minCol) minCol = item.COL;
             if (item.COL > maxCol) maxCol = item.COL;
         }
-
         int pieceWidth = maxCol - minCol + 1;
         int pieceHeight = maxRow - minRow + 1;
 
