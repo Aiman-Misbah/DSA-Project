@@ -21,10 +21,47 @@ WelcomeScreen::~WelcomeScreen() {
 void WelcomeScreen::Load() {
     font = LoadFontEx("Font/monogram.ttf", 64, 0, 0);
 
-    // Create background - MATCH WINDOW SIZE
-    Image img = GenImageColor(1200, 800, DarkBlue);
-    background = LoadTextureFromImage(img);
-    UnloadImage(img);
+    // Try to load the wallpaper
+    background = LoadTexture("Images/wallpaper.jpg");
+
+    // Check if texture loaded successfully
+    if (background.id == 0) {
+        cout << "ERROR: Could not load Images/wallpaper.jpg!" << endl;
+        cout << "Creating fallback background..." << endl;
+
+        // Create a simple blue gradient as fallback using correct Raylib function
+        Image fallbackImg = GenImageColor(1200, 800, DarkBlue);
+
+        // Manually create vertical gradient
+        for (int y = 0; y < 800; y++) {
+            float ratio = (float)y / 800.0f;
+            Color color = {
+                (unsigned char)(50 + ratio * 50),    // R: 50 to 100
+                (unsigned char)(100 + ratio * 50),   // G: 100 to 150
+                (unsigned char)(180 + ratio * 40),   // B: 180 to 220
+                255
+            };
+
+            for (int x = 0; x < 1200; x++) {
+                ImageDrawPixel(&fallbackImg, x, y, color);
+            }
+        }
+
+        background = LoadTextureFromImage(fallbackImg);
+        UnloadImage(fallbackImg);
+
+        cout << "Using fallback background" << endl;
+    }
+    else {
+        cout << "Successfully loaded wallpaper.jpg: "
+            << background.width << "x" << background.height << endl;
+
+        // Check image size
+        if (background.width != 1200 || background.height != 800) {
+            cout << "Image is " << background.width << "x" << background.height
+                << " - will be scaled to fit 1200x800 window" << endl;
+        }
+    }
 
     // Create letters T-E-T-R-I-S with CENTERED position
     float totalWidth = 6 * 100.0f - 50.0f;  // "TETRIS" = 6 letters
@@ -225,9 +262,23 @@ void WelcomeScreen::Update(bool& startGame, bool& showInstructionsScreen) {
         }
     }
 }
+
 void WelcomeScreen::Draw() {
-    // Draw background
-    DrawTexture(background, 0, 0, WHITE);
+    // Draw background - SCALED TO FIT
+    // Calculate scaling to fill the window while maintaining aspect ratio
+    float scaleX = 1200.0f / background.width;
+    float scaleY = 800.0f / background.height;
+    float scale = max(scaleX, scaleY);  // Use max to fill the entire window
+
+    float scaledWidth = background.width * scale;
+    float scaledHeight = background.height * scale;
+
+    // Calculate position to center the scaled image
+    float posX = (1200 - scaledWidth) / 2.0f;
+    float posY = (800 - scaledHeight) / 2.0f;
+
+    // Draw the scaled background
+    DrawTextureEx(background, Vector2{ posX, posY }, 0.0f, scale, WHITE);
 
     // Draw falling blocks
     for (const auto& block : blocks) {
