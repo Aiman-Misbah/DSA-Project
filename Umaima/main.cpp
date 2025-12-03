@@ -148,7 +148,10 @@ int main() {
             // Draw game (same as before)
             game.Draw();
 
-            Manager.Draw(game.musicOn, gamePaused, game.score, font, game.showGhost, ghostAnimationProgress, game.GetPlayTime(), game.GetTotalLinesCleared(), game.GameOver, game.GetLeaderboard());
+            // Line where you call Manager.Draw (around line 129):
+            Manager.Draw(game.musicOn, gamePaused, game.score, font, game.showGhost,
+                ghostAnimationProgress, game.GetPlayTime(), game.GetTotalLinesCleared(),
+                game.GameOver, game.GetLeaderboard(), game, game.GetPieceQueue());
 
             game.DrawMessages();
             
