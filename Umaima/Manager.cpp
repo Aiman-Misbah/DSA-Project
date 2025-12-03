@@ -5,7 +5,7 @@ using namespace std;
 
 Manager::Manager() : buttonScale(0.2f), musicX(0), musicY(0), pauseX(0), pauseY(0),
 isHoveringMusic(false), isHoveringPause(false), isHoveringGhost(false),
-ghostToggleX(0.0f), ghostToggleY(0.0f), myBlue(59, 85, 162, 255), musicAnimationProgress(0.0f), isMusicAnimating(false), isHoveringReplay(false), isHoveringMenu(false) {
+ghostToggleX(0.0f), ghostToggleY(0.0f), musicAnimationProgress(0.0f), isMusicAnimating(false), isHoveringReplay(false), isHoveringMenu(false) {
     LoadTextures();
     replayButton = { 0,0,200,60 };
     menuButton = { 0,0,200,60 };
@@ -75,7 +75,7 @@ void Manager::Update(bool& musicOn, bool& gamePaused, bool isCountingDown, bool&
     }
 }
 
-void Manager::Draw(bool musicOn, bool gamePaused, int score, Font& font, bool ghostEnabled, float ghostAnimationProgress, double time, int lines, bool gameOver) {
+void Manager::Draw(bool musicOn, bool gamePaused, int score, Font& font, bool ghostEnabled, float ghostAnimationProgress, double time, int lines, bool gameOver, Leaderboard& leaderboard) {
 
 
     // ============ LEFT PANEL - GAME STATS ============
@@ -166,13 +166,13 @@ void Manager::Draw(bool musicOn, bool gamePaused, int score, Font& font, bool gh
     float textY = ghostToggleY + (toggleHeight - TextSize.y) / 2;
     DrawTextEx(font, fullText, { textX, textY }, 14, 1, textColor);
 
-    Color circleColor = isHoveringGhost ? Color{ 250, 250, 250, 255 } : WHITE;
+    Color circleColor = isHoveringGhost ? GhostHover : WHITE;
     DrawCircle(circleX, ghostToggleY + toggleHeight / 2, 12.0f, circleColor);
 
     if (gameOver) {
         bool dummyRestart = false;  // These will be set by Update
         bool dummyReturnToMenu = false;
-        DrawGameOverScreen(font, score, gameOver, dummyRestart, dummyReturnToMenu);
+        DrawGameOverScreen(font, score, gameOver, dummyRestart, dummyReturnToMenu, leaderboard);
         return;
     }
 }
@@ -225,7 +225,7 @@ void Manager::UpdateParticles(float deltaTime) {
 
     // Remove dead particles
     particles.erase(
-        std::remove_if(particles.begin(), particles.end(),
+        remove_if(particles.begin(), particles.end(),
             [](const GameOverParticle& p) { return p.life <= 0; }),
         particles.end()
     );
@@ -237,7 +237,7 @@ void Manager::UpdateParticles(float deltaTime) {
         float angle = GetRandomValue(0, 360) * DEG2RAD;
         float speed = GetRandomValue(1, 3);
         p.velocity = { cosf(angle) * speed, sinf(angle) * speed };
-        p.color = Color{ 255, 215, 0, 200 }; // Gold
+        p.color = ParticleGold; // Gold
         p.size = GetRandomValue(2, 5);
         p.life = GetRandomValue(30, 80) / 100.0f;
         particles.push_back(p);
@@ -278,20 +278,17 @@ void Manager::UpdateGameOverScreen(Vector2 mousePos, bool& gameOver, bool& resta
     }
 }
 
-void Manager::DrawGameOverScreen(Font& font, int score, bool& gameOver, bool& restartRequested, bool& returnToMenuRequested) {
+void Manager::DrawGameOverScreen(Font& font, int score, bool& gameOver, bool& restartRequested, bool& returnToMenuRequested, Leaderboard& leaderboard) {
     // Draw semi-transparent overlay over entire screen
-    DrawRectangle(0, 0, 1200, 800, Color{ 0, 0, 0, 180 });
-
-    // Draw particles
-    DrawParticles();
+    DrawRectangle(0, 0, 1200, 800, GameOverShadow);
 
     // Calculate center position
     int centerX = 1200 / 2;
     int centerY = 800 / 2;
 
     // ============ MAIN PANEL ============
-    int panelWidth = 600;
-    int panelHeight = 500;
+    int panelWidth = 800;
+    int panelHeight = 600;  // Original size
     int panelX = centerX - panelWidth / 2;
     int panelY = centerY - panelHeight / 2;
 
@@ -334,7 +331,7 @@ void Manager::DrawGameOverScreen(Font& font, int score, bool& gameOver, bool& re
     // Title shadow
     DrawTextEx(font, gameOverText,
         { centerX - titleSize.x / 2 + 4, (float)panelY + 30 + 4 },
-        72, 3, Color{ 0, 0, 0, 150 });
+        72, 3, GameOverShadow);
 
     // Fixed: Draw the entire title with gradient
     for (int i = 0; i < 9; i++) { // "GAME OVER" has 9 characters including space
@@ -357,42 +354,111 @@ void Manager::DrawGameOverScreen(Font& font, int score, bool& gameOver, bool& re
             72, 3, charColor);
     }
 
-    // ============ SCORE DISPLAY ============
-    const char* scoreLabel = "FINAL SCORE";
-    Vector2 labelSize = MeasureTextEx(font, scoreLabel, 36, 2);
-    DrawTextEx(font, scoreLabel,
-        { centerX - labelSize.x / 2, (float)panelY + 140 },
-        36, 2, Color{ 200, 200, 255, 255 });
+    // ============ SIDE-BY-SIDE SCORES ============
+    int scoresY = panelY + 140;
+    int spacing = panelWidth * 0.35; // Distance between the two scores
 
-    // Score value with glowing effect
-    char scoreText[50];
-    snprintf(scoreText, sizeof(scoreText), "%d", score);
-    Vector2 scoreTextSize = MeasureTextEx(font, scoreText, 64, 3);
+    // FINAL SCORE (LEFT SIDE) - PROPERLY CENTERED
+    const char* finalScoreLabel = "FINAL SCORE";
+    Vector2 finalLabelSize = MeasureTextEx(font, finalScoreLabel, 36, 2);
+    int finalScoreX = centerX - spacing / 2 - finalLabelSize.x / 2;
 
-    // Glow effect
-    float pulse = sin(GetTime() * 3) * 0.2f + 0.8f;
-    for (int i = 0; i < 8; i++) {
-        DrawTextEx(font, scoreText,
-            { centerX - scoreTextSize.x / 2, (float)panelY + 180 },
-            64, 3, Color{ 255, 215, 0, (unsigned char)(50 * pulse) }); // Gold glow
+    DrawTextEx(font, finalScoreLabel,
+        { (float)finalScoreX, (float)scoresY },
+        36, 2, ScoreColour);
+
+    // Final score value
+    char finalScoreText[50];
+    snprintf(finalScoreText, sizeof(finalScoreText), "%d", score);
+    Vector2 finalScoreSize = MeasureTextEx(font, finalScoreText, 48, 3);
+
+    // Center the score value under its label
+    int finalScoreValueX = centerX - spacing / 2 - finalScoreSize.x / 2;
+
+    // Main final score text - SINGLE DRAW CALL
+    DrawTextEx(font, finalScoreText,
+        { (float)finalScoreValueX, (float)scoresY + 35 },
+        48, 3, ScoreColour);
+
+    // BEST SCORE (RIGHT SIDE) - PROPERLY CENTERED
+    int bestScore = leaderboard.GetHighestScore();
+    const char* bestScoreLabel = "BEST SCORE";
+    Vector2 bestLabelSize = MeasureTextEx(font, bestScoreLabel, 36, 2);
+    int bestScoreX = centerX + spacing / 2 - bestLabelSize.x / 2;
+
+    DrawTextEx(font, bestScoreLabel,
+        { (float)bestScoreX, (float)scoresY },
+        36, 2, ScoreColour);
+
+    // Best score value
+    char bestScoreText[50];
+    snprintf(bestScoreText, sizeof(bestScoreText), "%d", bestScore);
+    Vector2 bestScoreSize = MeasureTextEx(font, bestScoreText, 48, 3);
+
+    // Center the score value under its label
+    int bestScoreValueX = centerX + spacing / 2 - bestScoreSize.x / 2;
+
+    // Main best score text - SINGLE DRAW CALL
+    DrawTextEx(font, bestScoreText,
+        { (float)bestScoreValueX, (float)scoresY + 35 },
+        48, 3, ScoreColour);
+
+    // ============ LEADERBOARD ============
+    const char* leaderTitle = "TOP 5 SCORES";
+    Vector2 leaderTitleSize = MeasureTextEx(font, leaderTitle, 28, 2);
+    DrawTextEx(font, leaderTitle,
+        { centerX - leaderTitleSize.x / 2, (float)panelY + 250 },
+        28, 2, ScoreColour);
+
+    // Get top 5 scores
+    vector<int> topScores = leaderboard.GetTopScores(5);
+
+    // Display each score
+    for (int i = 0; i < 5; i++) {
+        float yPos = panelY + 290 + (i * 35);
+
+        // Rank number
+        char rank[10];
+        snprintf(rank, sizeof(rank), "%d.", i + 1);
+        DrawTextEx(font, rank,
+            { (float)centerX - 100, yPos },
+            24, 1, WHITE);
+
+        // Score or "--"
+        char scoreDisplayText[20];
+        if (i < topScores.size()) {
+            snprintf(scoreDisplayText, sizeof(scoreDisplayText), "%d", topScores[i]);
+
+            // Highlight if it's the current score
+            
+            Color scoreColor = WHITE;
+            if (topScores[i] == score) {
+                scoreColor = CurrentScoreHighlight; // Green for current
+            }
+
+            DrawTextEx(font, scoreDisplayText,
+                { (float)centerX - 30, yPos },
+                24, 1, scoreColor);
+        }
+        else {
+            // Show "--" for empty slots
+            DrawTextEx(font, "--",
+                { (float)centerX - 30, yPos },
+                24, 1, EmptyScoreSlot);
+        }
     }
 
-    // Main score text
-    DrawTextEx(font, scoreText,
-        { centerX - scoreTextSize.x / 2, (float)panelY + 180 },
-        64, 3, Color{ 255, 255, 100, 255 }); // Bright gold
-
     // ============ BUTTONS ============
-    int buttonY = panelY + 300;
-    int buttonSpacing = 50;
+    // Position buttons at the bottom of the panel
+    int buttonY = panelY + 520;
 
     // REPLAY BUTTON
     replayButton = { (float)centerX - 200, (float)buttonY, 150, 50 };
-    Color replayColor = isHoveringReplay ? Color{ 100, 200, 100, 255 } : Color{ 50, 150, 50, 255 };
+    Color replayColor = isHoveringReplay ? ReplayButtonHover : GREEN;
 
     // Button background with hover effect
     DrawRectangleRounded(replayButton, 0.3f, 8, replayColor);
-    DrawRectangleRoundedLines(replayButton, 0.3f, 8, Color{ 255, 255, 255, 200 });
+    DrawRectangleRoundedLines(replayButton, 0.3f, 8, ReplayButtonGlow);
 
     // Button glow on hover
     if (isHoveringReplay) {
@@ -407,7 +473,7 @@ void Manager::DrawGameOverScreen(Font& font, int score, bool& gameOver, bool& re
 
     // Button text
     const char* replayText = "REPLAY";
-    Vector2 replayTextSize = MeasureTextEx(font, replayText, 32, 2);
+    Vector2 replayTextSize = MeasureTextEx(font, replayText, 28, 2);
     DrawTextEx(font, replayText,
         { replayButton.x + replayButton.width / 2 - replayTextSize.x / 2,
           replayButton.y + replayButton.height / 2 - replayTextSize.y / 2 },
@@ -415,10 +481,10 @@ void Manager::DrawGameOverScreen(Font& font, int score, bool& gameOver, bool& re
 
     // MENU BUTTON
     menuButton = { (float)centerX + 50, (float)buttonY, 150, 50 };
-    Color menuColor = isHoveringMenu ? Color{ 200, 100, 100, 255 } : Color{ 150, 50, 50, 255 };
+    Color menuColor = isHoveringMenu ? MenuButtonHover :RED;
 
     DrawRectangleRounded(menuButton, 0.3f, 8, menuColor);
-    DrawRectangleRoundedLines(menuButton, 0.3f, 8, Color{ 255, 255, 255, 200 });
+    DrawRectangleRoundedLines(menuButton, 0.3f, 8, MenuButtonGlow);
 
     // Button glow on hover
     if (isHoveringMenu) {
@@ -433,30 +499,25 @@ void Manager::DrawGameOverScreen(Font& font, int score, bool& gameOver, bool& re
 
     // Button text
     const char* menuText = "MAIN MENU";
-    Vector2 menuTextSize = MeasureTextEx(font, menuText, 32, 2);
+    Vector2 menuTextSize = MeasureTextEx(font, menuText, 28, 2);
     DrawTextEx(font, menuText,
-        { menuButton.x +5+ menuButton.width / 2 - menuTextSize.x / 2,
+        { menuButton.x + menuButton.width / 2 - menuTextSize.x / 2,
           menuButton.y + menuButton.height / 2 - menuTextSize.y / 2 },
         28, 2, WHITE);
 
-    // ============ DECORATIVE ELEMENTS ============
-    // Sparkle effects
-    float sparkleTime = GetTime();
-    for (int i = 0; i < 5; i++) {
-        float x = panelX + 20 + (i * 120);
-        float y = panelY + 120 + sin(sparkleTime * 2 + i) * 10;
-        float size = 3 + sin(sparkleTime * 3 + i) * 2;
-        DrawCircle(x, y, size, Color{ 255, 255, 200, 200 });
-        DrawCircle(x, y, size + 2, Color{ 255, 255, 200, 100 });
-    }
 
-    // Bottom decorative line
-    DrawRectangle(panelX + 50, panelY + panelHeight - 40, panelWidth - 100, 2, GOLD);
+    // Decorative separator line above leaderboard
+    DrawRectangle(panelX + 50, panelY + 235, panelWidth - 100, 2, GOLD);
 
-    // Game over quote
+    DrawRectangle(panelX + 50, panelY + 475, panelWidth - 100, 2, GOLD);
+
+    // Game over quote - Position above buttons
     const char* quote = "Great effort! Ready for another round?";
-    Vector2 quoteSize = MeasureTextEx(GetFontDefault(), quote, 20, 1);
+    Vector2 quoteSize = MeasureTextEx(font, quote, 20, 1);
     DrawTextEx(font, quote,
-        { centerX -50 - quoteSize.x / 2, (float)panelY + panelHeight - 35 },
-        25, 1, Color{ 200, 200, 255, 200 });
+        { centerX - quoteSize.x / 2, (float)buttonY - 40 },
+        20, 1, GameOverQuote);
+
+    // Draw particles
+    DrawParticles();
 }
