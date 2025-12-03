@@ -1,177 +1,90 @@
 #include <iostream>
+#include "Position.h"
 #include "Piece.h"
-#include "Colours.cpp"
-#include "Board.h"
 using namespace std;
 
-Piece::Piece() {
-    size = 35;
-    state = 0;
-    colours = GetCellColours();
-    id = 0;
-    rowOffset = 0;
-    colOffset = 0;
-
-}
-
-void Piece::Draw(int x, int y) {
-    vector<Position> tiles = GetCellPositions();
-    for (Position item : tiles) {
-        // Check if this tile is at or below row 0 (top of visible board)
-        if (item.ROW >= 0) {
-            DrawRectangle(item.COL * size + y, item.ROW * size + x,
-                size - 1, size - 1, colours[id]);
-        }
-    }
-}
-
-void Piece::Move(int r, int c) {
-    rowOffset += r;
-    colOffset += c;
-}
-
-vector<Position> Piece::GetCellPositions() {
-    vector<Position> tiles = cells[state];
-    vector<Position> newTiles;
-    for (Position item : tiles) {
-        Position pos = Position(item.ROW + rowOffset, item.COL + colOffset);
-        newTiles.push_back(pos);
-    }
-    return newTiles;
-}
-
-void Piece::Rotate() {
-    state++;
-    if (state == 4) {
-        state = 0;
-    }
-}
-
-void Piece::UndoRotation() {
-    state--;
-    if (state == -1) {
-        state = 3;
-    }
-}
-
-bool Piece::HasCollision(Board& board) {
-    vector<Position> tiles = GetCellPositions();
-    for (Position item : tiles) {
-        if (board.CollisionDetected(item.ROW, item.COL)) {
-            return true;
-        }
-    }
-    return false;
-}
+class LPiece :public Piece {
+public:
+	LPiece() {
+		id = 1;
+		cells[0] = { Position(0,2), Position(1,0), Position(1,1), Position(1,2) };
+		cells[1] = { Position(0,1), Position(1,1), Position(2,1), Position(2,2) };
+		cells[2] = { Position(1,0), Position(1,1),Position(1,2),Position(2,0) };
+		cells[3] = { Position(0,0),Position(0,1),Position(1,1), Position(2,1) };
+		Move(0, 3);
+	}
+};
 
 
-bool Piece::TryRotationWithOffset(Board& board, int rowOffset, int colOffset, int attempts) {
-    //  BASE CASE: No more attempts
-    if (attempts <= 0) {
-        return false;
-    }
+class JPiece :public Piece {
+public:
+	JPiece() {
+		id = 2;
+		cells[0] = { Position(0,0), Position(1,0), Position(1,1), Position(1,2) };
+		cells[1] = { Position(0,1), Position(0,2), Position(1,1), Position(2,1) };
+		cells[2] = { Position(1,0), Position(1,1), Position(1,2), Position(2,2) };
+		cells[3] = { Position(0,1), Position(1,1), Position(2,0), Position(2,1) };
+		Move(0, 3);
+	}
+};
 
-    // Store original position for backtracking
-    int originalRow = rowOffset;
-    int originalCol = colOffset;
+class IPiece :public Piece {
+public:
+	IPiece() {
+		id = 3;
+		cells[0] = { Position(1,0), Position(1,1), Position(1,2), Position(1,3) };
+		cells[1] = { Position(0,2), Position(1,2), Position(2,2), Position(3,2) };
+		cells[2] = { Position(2,0), Position(2,1), Position(2,2), Position(2,3) };
+		cells[3] = { Position(0,1), Position(1,1), Position(2,1), Position(3,1) };
+		Move(-1, 3);
+	}
+};
 
-    // Try moving to the offset position
-    Move(rowOffset, colOffset);
+class OPiece :public Piece {
+public:
+	OPiece() {
+		id = 4;
+		cells[0] = { Position(0,0), Position(0,1), Position(1,0), Position(1,1) };
+		cells[1] = { Position(0,0), Position(0,1), Position(1,0), Position(1,1) };
+		cells[2] = { Position(0,0), Position(0,1), Position(1,0), Position(1,1) };
+		cells[3] = { Position(0,0), Position(0,1), Position(1,0), Position(1,1) };
+		Move(0, 4);
+	}
+};
 
-    // Check if this position is valid
-    if (!HasCollision(board)) {
-        return true; //  Success!
-    }
+class SPiece :public Piece {
+public:
+	SPiece() {
+		id = 5;
+		cells[0] = { Position(0,1), Position(0,2), Position(1,0), Position(1,1) };
+		cells[1] = { Position(0,1), Position(1,1), Position(1,2), Position(2,2) };
+		cells[2] = { Position(1,1), Position(1,2), Position(2,0), Position(2,1) };
+		cells[3] = { Position(0,0), Position(1,0), Position(1,1), Position(2,1) };
+		Move(0, 3);
+	}
+};
 
-    //  BACKTRACK: Position not valid, undo movement
-    Move(-rowOffset, -colOffset);
+class TPiece :public Piece {
+public:
+	TPiece() {
+		id = 6;
+		cells[0] = { Position(0,1), Position(1,0), Position(1,1), Position(1,2) };
+		cells[1] = { Position(0,1), Position(1,1), Position(1,2), Position(2,1) };
+		cells[2] = { Position(1,0), Position(1,1), Position(1,2), Position(2,1) };
 
-    //  RECURSION: Try with smaller offset
-    return TryRotationWithOffset(board, rowOffset / 2, colOffset / 2, attempts - 1);
-}
+		cells[3] = { Position(0,1), Position(1,0), Position(1,1), Position(2,1) };
+		Move(0, 3);
+	}
+};
 
-//  NEW: Main recursive rotation with wall kicks
-bool Piece::RotateWithWallKicks(Board& board) {
-    // Store original state for backtracking
-    int originalState = state;
-    int originalRow = rowOffset;
-    int originalCol = colOffset;
-
-    // Try the rotation first
-    Rotate();
-
-    // If rotation is valid at current position, success!
-    if (!HasCollision(board)) {
-        return true;
-    }
-
-    // Define wall kick patterns to try (row, col offsets)
-    vector<Position> wallKicks = {
-        Position(0, -1),  // Left
-        Position(0, 1),   // Right
-        Position(-1, 0),  // Up
-        Position(1, 0),   // Down
-        Position(-1, -1), // Up-Left
-        Position(-1, 1),  // Up-Right
-        Position(1, -1),  // Down-Left
-        Position(1, 1)    // Down-Right
-    };
-
-    // Try each wall kick position recursively
-    for (Position& kick : wallKicks) {
-        if (TryRotationWithOffset(board, kick.ROW, kick.COL, 3)) {
-            return true; //  Found valid position!
-        }
-    }
-
-    //  BACKTRACK: All attempts failed, undo the rotation completely
-    state = originalState;
-    rowOffset = originalRow;
-    colOffset = originalCol;
-
-    return false; //  No valid position found
-}
-
-Piece Piece::GetGhostPiece(Board& board) {
-    Piece ghost = *this;  // Create a copy of current piece
-    // If the piece is completely above the board, don't calculate ghost yet
-    vector<Position> tiles = ghost.GetCellPositions();
-    bool isAboveBoard = true;
-    for (Position item : tiles) {
-        if (item.ROW >= 0) {
-            isAboveBoard = false;
-            break;
-        }
-    }
-    // If all tiles are above the board, return the ghost at current position
-    if (isAboveBoard) {
-        return ghost;
-    }
-
-    // Otherwise, calculate normal ghost position
-    // Move ghost down until it collides
-    while (!ghost.HasCollision(board)) {
-        ghost.Move(1, 0);
-    }
-    // Move back up one to the last valid position
-    ghost.Move(-1, 0);
-
-    return ghost;
-}
-
-void Piece::DrawGhost(int x, int y) {
-    vector<Position> tiles = GetCellPositions();
-    Color ghostColor = colours[id];
-    ghostColor.a = 80;  // Make it semi-transparent (80/255 opacity)
-
-    for (Position item : tiles) {
-        // Only draw ghost tiles that are at or below row 0
-        if (item.ROW >= 0) {
-            DrawRectangle(item.COL * size + y, item.ROW * size + x,
-                size - 1, size - 1, ghostColor);
-            // Optional: Draw border to make it more visible
-            DrawRectangleLines(item.COL * size + y, item.ROW * size + x,
-                size - 1, size - 1, Fade(WHITE, 0.3f));
-        }
-    }
-}
+class ZPiece :public Piece {
+public:
+	ZPiece() {
+		id = 7;
+		cells[0] = { Position(0,0), Position(0,1), Position(1,1), Position(1,2) };
+		cells[1] = { Position(0,2), Position(1,1), Position(1,2), Position(2,1) };
+		cells[2] = { Position(1,0), Position(1,1), Position(2,1), Position(2,2) };
+		cells[3] = { Position(0,1), Position(1,0), Position(1,1), Position(2,0) };
+		Move(0, 3);
+	}
+};
