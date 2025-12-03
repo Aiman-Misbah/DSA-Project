@@ -14,7 +14,7 @@ const Color Purple = { 166, 0, 247, 255 };
 const Color Cyan = { 21, 204, 209, 255 };
 const Color Blue = { 13, 64, 216, 255 };
 const Color LightBlue = { 59, 85, 162, 255 };
-const Color DarkBlue = { 44, 44, 127, 255 };
+const Color DarkBlue = { 31, 68, 94, 255 };
 const Color PanelBlue = { 59, 85, 162, 255 };
 const Color DarkOverlay = { 0, 0, 0, 100 };
 
