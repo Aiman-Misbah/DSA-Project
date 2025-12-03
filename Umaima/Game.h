@@ -6,6 +6,7 @@
 #include "ScoreAVL.h"
 #include "UndoStack.h"
 #include "PieceQueue.h"
+#include "Leaderboard.h"
 #include <vector>
 #include <raylib.h>
 using namespace std;
@@ -61,7 +62,7 @@ private:
     void RestoreBoardState();
 
     struct LineClearMessage {
-        std::string text;
+        string text;
         float displayTime;
         float duration;
         Color color;
@@ -72,6 +73,8 @@ private:
     float messageTime;
 
     void AddLineClearMessage(int linesCleared);
+
+    Leaderboard leaderboard;
 
 public:
     Game();
@@ -101,9 +104,6 @@ public:
     // Public undo method for last locked piece
     void UndoLastLockedPiece();
 
-    // Method to display piece queue
-    void DisplayPieceQueue();
-
     // Hold methods
     void ToggleHoldPiece();
     bool IsHolding() const { return isHolding; }
@@ -113,4 +113,6 @@ public:
     void UpdateMessages(float deltaTime);
     void DrawMessages();
     void Reset();
+
+    Leaderboard& GetLeaderboard() { return leaderboard; }
 };
