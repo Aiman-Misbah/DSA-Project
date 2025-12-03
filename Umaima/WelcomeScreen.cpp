@@ -1,4 +1,5 @@
 #include "WelcomeScreen.h"
+#include "Colours.h"
 #include <iostream>
 #include <random>
 
@@ -9,7 +10,7 @@ WelcomeScreen::WelcomeScreen() :
     animationComplete(false),
     wigglePhase(false),      // Initialize wiggle phase
     isHoveringPlay(false),
-    buttonColor({ 59, 85, 162, 255 }), showInstructions(false) {
+    buttonColor(PanelBlue), showInstructions(false) {
     Load();
 }
 
@@ -20,13 +21,14 @@ WelcomeScreen::~WelcomeScreen() {
 void WelcomeScreen::Load() {
     font = LoadFontEx("Font/monogram.ttf", 64, 0, 0);
 
-    // Create background
-    Image img = GenImageColor(1000, 750, { 44, 44, 127, 255 });
+    // Create background - MATCH WINDOW SIZE
+    Image img = GenImageColor(1200, 800, DarkBlue);
     background = LoadTextureFromImage(img);
     UnloadImage(img);
 
-    // Create letters T-E-T-R-I-S with falling blocks
-    float startX = 225.0f;
+    // Create letters T-E-T-R-I-S with CENTERED position
+    float totalWidth = 6 * 100.0f - 50.0f;  // "TETRIS" = 6 letters
+    float startX = (1200.0f - totalWidth) / 2.0f;  // Center calculation
     float startY = 150.0f;
     float letterSpacing = 100.0f;
 
@@ -37,10 +39,10 @@ void WelcomeScreen::Load() {
     CreateLetterI(startX + letterSpacing * 4 - 25, startY);
     CreateLetterS(startX + letterSpacing * 5 - 50, startY);
 
-    // Button position
-    playButtonX = (1000 - 200) / 2;
+    // Button position - CENTERED
+    playButtonX = (1200 - 200) / 2;  // Center 200px button in 1200px window
     playButtonY = 450;
-    instructionsButtonX = (1000 - 200) / 2;
+    instructionsButtonX = (1200 - 200) / 2;
     instructionsButtonY = 550;
 }
 
@@ -56,7 +58,7 @@ void WelcomeScreen::CreateLetterT(float startX, float startY) {
         block.originalPosition = pos; // Store original position for wiggle
         block.position = { pos.x, -100.0f };
         block.speed = 300.0f + (rand() % 100);
-        block.color = { 247, 87, 87, 255 }; // Red
+        block.color = TetrisRed; // Red
         block.arrived = false;
         block.delay = (rand() % 100) / 100.0f;
         block.wiggleTime = 0;
@@ -82,7 +84,7 @@ void WelcomeScreen::CreateLetterE(float startX, float startY) {
         block.originalPosition = pos;
         block.position = { pos.x, -100.0f };
         block.speed = 300.0f + (rand() % 100);
-        block.color = { 87, 247, 87, 255 }; // Green
+        block.color = TetrisGreen; // Green
         block.arrived = false;
         block.delay = (rand() % 100) / 100.0f;
         block.wiggleTime = 0;
@@ -106,7 +108,7 @@ void WelcomeScreen::CreateLetterR(float startX, float startY) {
         block.originalPosition = pos;
         block.position = { pos.x, -100.0f };
         block.speed = 300.0f + (rand() % 100);
-        block.color = { 87, 87, 247, 255 }; // Blue
+        block.color = TetrisBlue; // Blue
         block.arrived = false;
         block.delay = (rand() % 100) / 100.0f;
         block.wiggleTime = 0;
@@ -128,7 +130,7 @@ void WelcomeScreen::CreateLetterI(float startX, float startY) {
         block.originalPosition = pos;
         block.position = { pos.x, -100.0f };
         block.speed = 300.0f + (rand() % 100);
-        block.color = { 247, 247, 87, 255 }; // Yellow
+        block.color = TetrisYellow; // Yellow
         block.arrived = false;
         block.delay = (rand() % 100) / 100.0f;
         block.wiggleTime = 0;
@@ -152,7 +154,7 @@ void WelcomeScreen::CreateLetterS(float startX, float startY) {
         block.originalPosition = pos;
         block.position = { pos.x, -100.0f };
         block.speed = 300.0f + (rand() % 100);
-        block.color = { 247, 87, 247, 255 }; // Purple
+        block.color = TetrisPurple; // Purple
         block.arrived = false;
         block.delay = (rand() % 100) / 100.0f;
         block.wiggleTime = 0;
@@ -264,7 +266,7 @@ void WelcomeScreen::Draw() {
         const char* basicInstructions = "Use ARROW KEYS to move and rotate pieces";
         Vector2 basicInstrSize = MeasureTextEx(font, basicInstructions, 20, 1);
         DrawTextEx(font, basicInstructions,
-            { (1000 - basicInstrSize.x) / 2, 650 },
+            { (1200 - basicInstrSize.x) / 2, 650 },
             20, 1, WHITE);
     }
 }
@@ -273,23 +275,28 @@ void WelcomeScreen::Draw() {
 // NEW: Draw instructions screen
 void WelcomeScreen::DrawInstructions() {
     // Draw semi-transparent overlay
-    DrawRectangle(0, 0, 1000, 750, { 0, 0, 0, 200 });
+    DrawRectangle(0, 0, 1200, 800, { 0, 0, 0, 200 });  // Changed from 1000 to 1200
 
-    // Draw instructions box
-    DrawRectangleRounded({ 150, 100, 700, 550 }, 0.3f, 6, buttonColor);
-    DrawRectangleRoundedLines({ 150, 100, 700, 550 }, 0.3f, 3, WHITE);
+    // Draw instructions box - CENTERED in 1200px window
+    float boxWidth = 700.0f;
+    float boxHeight = 550.0f;
+    float boxX = (1200.0f - boxWidth) / 2.0f;  // Center calculation
+    float boxY = 125.0f;
 
-    // Title
+    DrawRectangleRounded({ boxX, boxY, boxWidth, boxHeight }, 0.3f, 6, buttonColor);
+    DrawRectangleRoundedLines({ boxX, boxY, boxWidth, boxHeight }, 0.3f, 3, WHITE);
+
+    // Title - centered in the window
     const char* title = "HOW TO PLAY";
     Vector2 titleSize = MeasureTextEx(font, title, 48, 2);
-    DrawTextEx(font, title, { (1000 - titleSize.x) / 2, 130 }, 48, 2, WHITE);
+    DrawTextEx(font, title, { (1200.0f - titleSize.x) / 2.0f, boxY + 30 }, 48, 2, WHITE);
 
     // Instructions content
     vector<string> instructions = {
         "CONTROLS:",
-        "? ? ARROWS  : Move piece left/right",
-        "? ARROW     : Rotate piece",
-        "? ARROW     : Soft drop (move down faster)",
+        "← → ARROWS  : Move piece left/right",
+        "↑ ARROW     : Rotate piece",
+        "↓ ARROW     : Soft drop (move down faster)",
         "SPACEBAR    : Hard drop (instant drop)",
         "",
         "GAME FEATURES:",
@@ -307,26 +314,26 @@ void WelcomeScreen::DrawInstructions() {
         "5+ lines: 800 + 100 per extra line"
     };
 
-    float yPos = 200;
+    float yPos = boxY + 100;
     for (const string& line : instructions) {
         Vector2 lineSize = MeasureTextEx(font, line.c_str(), 22, 1);
-        DrawTextEx(font, line.c_str(), { (1000 - lineSize.x) / 2, yPos }, 22, 1, WHITE);
+        DrawTextEx(font, line.c_str(), { (1200.0f - lineSize.x) / 2.0f, yPos }, 22, 1, WHITE);
         yPos += 30;
     }
 
-    // Back button
-    Rectangle backBounds = { 400, 600, 200, 60 };
+    // Back button - centered below instructions
+    Rectangle backBounds = { (1200.0f - 200.0f) / 2.0f, boxY + boxHeight - 80, 200, 60 };
     bool isHoveringBack = CheckCollisionPointRec(GetMousePosition(), backBounds);
-    Color backColor = isHoveringBack ? LIGHTGRAY : Color{ 162, 59, 85, 255 }; // Different color
+    Color backColor = isHoveringBack ? LIGHTGRAY : InstructionsBackButton;
 
     DrawRectangleRounded(backBounds, 0.3f, 6, backColor);
     const char* backText = "BACK TO MENU";
     Vector2 backTextSize = MeasureTextEx(font, backText, 24, 1);
     DrawTextEx(font, backText,
-        { 400 + (200 - backTextSize.x) / 2, 600 + (60 - backTextSize.y) / 2 },
+        { backBounds.x + (backBounds.width - backTextSize.x) / 2,
+          backBounds.y + (backBounds.height - backTextSize.y) / 2 },
         24, 1, WHITE);
 }
-
 
 void WelcomeScreen::Unload() {
     UnloadFont(font);
