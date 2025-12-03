@@ -56,6 +56,8 @@ Game::Game() : pieceQueue(5) {
     // Initialize hold
     isHolding = false;
     holdPiece = Piece();
+    
+    cout << "Leaderboard initialized with " << leaderboard.GetTopScores(100).size() << " scores" << endl;
 
     cout << "=== GAME INITIALIZATION COMPLETE ===" << endl;
 }
@@ -210,7 +212,6 @@ void Game::Draw() {
     DrawText("H = Hold", 70, 520, 16, WHITE);
     DrawText("Space = Hard Drop", 70, 550, 16, WHITE);
     DrawText("Ctrl+Z = Undo", 70, 580, 16, WHITE);
-    DrawText("Q = Queue Info", 70, 610, 16, WHITE);
 
     // ============ RIGHT PANEL ============
     // Next Pieces (Top-right) - X: 850, Y: 100
@@ -491,6 +492,9 @@ void Game::LockPiece() {
 
     if (!PieceFits()) {
         GameOver = true;
+        leaderboard.AddScore(score);
+        cout << "Score " << score << " added to leaderboard. Bset: " << leaderboard.GetHighestScore() << endl;
+        StopMusicStream(music);
     }
     else {
         // If it fits, move it above the board for the drop-in effect
@@ -511,10 +515,7 @@ bool Game::PieceFits() {
 
 void Game::HandleInput() {
     int key = GetKeyPressed();
-    if (GameOver && key != 0) {
-        GameOver = false;
-        Reset();
-    }
+
 
     bool pieceMoved = false;
 
@@ -522,12 +523,6 @@ void Game::HandleInput() {
     if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_Z)) {
         UndoLastLock();
         pieceMoved = true;
-    }
-
-    // Press 'Q' to display piece queue manually
-    if (key == KEY_Q) {
-        cout << "=== MANUAL QUEUE DISPLAY ===" << endl;
-        DisplayPieceQueue();
     }
 
     // Press 'H' to toggle hold (hold/release)
@@ -598,7 +593,11 @@ void Game::Reset() {
     gameStartTime = 0;
     totalLinesCleared = 0;
 
+        PlayMusicStream(music);
+
     cout << "Game reset complete!" << endl;
+
+    
 }
 
 void Game::UpdateScore(int lines) {
@@ -621,9 +620,6 @@ void Game::UpdateScore(int lines) {
 
 }
 
-void Game::DisplayPieceQueue() {
-    pieceQueue.DisplayNextThree();
-}
 
 // Add this after other methods, before Draw()
 
@@ -677,7 +673,7 @@ void Game::UpdateMessages(float deltaTime) {
 
     // Remove inactive messages
     activeMessages.erase(
-        std::remove_if(activeMessages.begin(), activeMessages.end(),
+        remove_if(activeMessages.begin(), activeMessages.end(),
             [](const LineClearMessage& msg) { return !msg.isActive; }),
         activeMessages.end()
     );
