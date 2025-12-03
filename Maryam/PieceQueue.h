@@ -13,6 +13,15 @@ private:
     // helper: create a random concrete piece (implemented in cpp)
     Piece CreateRandomPiece();
 
+    // NEW: Create random piece that doesn't appear in recent window
+    Piece CreateRandomPieceNoRepeat();
+
+    // NEW: Check if a piece would appear in the last (windowSize-1) positions
+    bool WouldCauseRepeat(int pieceId, int windowSize) const;
+
+    // NEW: Check both window sizes (2 and 3)
+    bool WouldCauseAnyRepeat(int pieceId) const;
+
 public:
     PieceQueue(int cap = 5);
     ~PieceQueue();
@@ -38,6 +47,6 @@ public:
     // NEW: Get the next three pieces for display
     vector<Piece> GetNextThree() const;
 
-	vector<Piece> GetAllPieces() const { return q; }  // Get copy of all pieces
-	void ClearAndSetPieces(const vector<Piece>& newPieces);  // Set the queue
+    vector<Piece> GetAllPieces() const { return q; }  // Get copy of all pieces
+    void ClearAndSetPieces(const vector<Piece>& newPieces);  // Set the queue
 };
