@@ -24,7 +24,6 @@ int main() {
     InitWindow(1200, 800, "Tetris Game");
     SetTargetFPS(60);
 
-    Color darkBlue = { 44,44,127,255 };
     Font font = LoadFontEx("Font/monogram.ttf", 64, 0, 0);
 
     Game game;
@@ -133,7 +132,7 @@ int main() {
         }
 
         BeginDrawing();
-        ClearBackground(darkBlue);
+        ClearBackground(DarkBlue);
 
         if (!gameStarted) {
             if (showInstructions) {
@@ -149,7 +148,7 @@ int main() {
             // Draw game (same as before)
             game.Draw();
 
-            Manager.Draw(game.musicOn, gamePaused, game.score, font, game.showGhost, ghostAnimationProgress, game.GetPlayTime(), game.GetTotalLinesCleared(), game.GameOver);
+            Manager.Draw(game.musicOn, gamePaused, game.score, font, game.showGhost, ghostAnimationProgress, game.GetPlayTime(), game.GetTotalLinesCleared(), game.GameOver, game.GetLeaderboard());
 
             game.DrawMessages();
             
