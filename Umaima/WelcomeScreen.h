@@ -34,6 +34,13 @@ private:
     bool isHoveringInstructions;
     Color buttonColor;
     bool showInstructions;  // NEW: Track if instructions are shown
+    
+    void CreateLetterT(float startX, float startY);
+    void CreateLetterE(float startX, float startY);
+    void CreateLetterR(float startX, float startY);
+    void CreateLetterI(float startX, float startY);
+    void CreateLetterS(float startX, float startY);
+
 
 public:
     WelcomeScreen();
@@ -46,10 +53,5 @@ public:
     bool GetShowInstructions() const { return showInstructions; }  // NEW: Getter
     void DrawInstructions();  // NEW: Draw instructions screen
 
-private:
-    void CreateLetterT(float startX, float startY);
-    void CreateLetterE(float startX, float startY);
-    void CreateLetterR(float startX, float startY);
-    void CreateLetterI(float startX, float startY);
-    void CreateLetterS(float startX, float startY);
+    
 };
