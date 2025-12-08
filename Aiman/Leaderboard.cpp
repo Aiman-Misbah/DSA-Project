@@ -9,7 +9,7 @@ void Leaderboard::AddScore(int score) {
 }
 
 vector<int> Leaderboard::GetTopScores(int count) {
-    return scoresTree.GetTopScores(count);
+    return scoresTree.GetTopScores(count); //returns a vector of the top scores
 }
 
 int Leaderboard::GetHighestScore() {
@@ -17,5 +17,5 @@ int Leaderboard::GetHighestScore() {
 }
 
 void Leaderboard::Reset() {
-    scoresTree.Clear();
+    scoresTree.Clear(); //resetting for new game - after every run
 }
