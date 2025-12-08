@@ -3,6 +3,8 @@
 #include <iostream>
 using namespace std;
 
+
+//for the Piece Bag
 class Node {
 public:
     Piece data;
@@ -24,5 +26,5 @@ public:
     Piece GetPiece(int index);
     void RemovePiece(int index);
     int GetSize();
-    void Clear();
+    void Clear();   //deleting all nodes
 };
