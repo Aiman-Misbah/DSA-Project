@@ -23,21 +23,133 @@ void Manager::LoadTextures() {
 
     int scaledWidth = musicOnTex.width * buttonScale;
 
-    // NEW POSITIONS for controls (in the right panel)
-    musicX = 900;  // X position in right panel
-    musicY = 560;  // Y position for music button
+    //pos for controls (in the right panel)
+    musicX = 900;
+    musicY = 560;  
 
-    pauseX = 1025;  // X position in right panel  
-    pauseY = 560;  // Y position for pause button
+    pauseX = 1025;   
+    pauseY = 560; 
 
-    ghostToggleX = 950.0f;  // X position in right panel
-    ghostToggleY = 650.0f;  // Y position for ghost toggle
+    ghostToggleX = 950.0f;  
+    ghostToggleY = 650.0f; 
 }
+
+void Manager::Draw(bool musicOn, bool gamePaused, int score, Font& font, bool ghostEnabled,
+    float ghostAnimationProgress, double time, int lines, bool gameOver,
+    Leaderboard& leaderboard, const Game& game, const PieceQueue& pieceQueue) {
+
+    // left side
+    DrawHoldPanel(game);
+    DrawControlsPanel();
+
+    //game stats panel - mid left
+    DrawRectangleRounded({ 50, 280, 200, 180 }, 0.3f, 6, PanelBlue);
+    DrawText("GAME STATS", 65, 250, 20, WHITE);
+
+    // Score
+    DrawTextEx(font, "Score:", { 70, 310 }, 28, 1, WHITE);
+    char scoreText[20];
+    //converting int to string
+    snprintf(scoreText, sizeof(scoreText), "%d", score);
+    DrawTextEx(font, scoreText, { 160, 310 }, 28, 1, WHITE);
+
+    // Time
+    DrawTextEx(font, "Time:", { 70, 350 }, 28, 1, WHITE);
+    char timeText[20];
+    int minutes = (int)time / 60;
+    int seconds = (int)time % 60;
+    snprintf(timeText, sizeof(timeText), "%02d:%02d", minutes, seconds);
+    DrawTextEx(font, timeText, { 150, 350 }, 28, 1, WHITE);
+
+    // Lines
+    DrawTextEx(font, "Lines:", { 70, 390 }, 28, 1, WHITE);
+    char linesText[20];
+    snprintf(linesText, sizeof(linesText), "%d", lines);
+    DrawTextEx(font, linesText, { 160, 390 }, 28, 1, WHITE);
+
+
+    //right side
+    DrawNextPiecesPanel(pieceQueue);
+
+    //game controls panel
+    DrawRectangleRounded({ 850, 500, 300, 200 }, 0.3f, 6, PanelBlue);
+    DrawText("GAME CONTROLS", 880, 475, 20, WHITE);
+
+    // Music button
+    Color musicHoverColor = isHoveringMusic ? LIGHTGRAY : WHITE;
+    DrawText("Music:", 910, 520, 18, WHITE);
+    if (musicOn) {
+        DrawTextureEx(musicOnTex, { (float)musicX, (float)musicY }, 0.0f, buttonScale, musicHoverColor);
+    }
+    else {
+        DrawTextureEx(musicOffTex, { (float)musicX, (float)musicY }, 0.0f, buttonScale, musicHoverColor);
+    }
+
+    // Pause button
+    Color pauseHoverColor = isHoveringPause ? LIGHTGRAY : WHITE;
+    DrawText("Pause:", 1025, 520, 18, WHITE);
+    if (gamePaused) {
+        DrawTextureEx(playTex, { (float)pauseX, (float)pauseY }, 0.0f, buttonScale, pauseHoverColor);
+    }
+    else {
+        DrawTextureEx(pauseTex, { (float)pauseX, (float)pauseY }, 0.0f, buttonScale, pauseHoverColor);
+    }
+
+    // Ghost toggle
+    const char* fullText = ghostEnabled ? "Ghost ON" : "Ghost OFF";
+    Color toggleBg = ghostEnabled ? GREEN : RED;
+    float toggleWidth = 100.0f;
+    float toggleHeight = 30.0f;
+    DrawRectangleRounded({ ghostToggleX, ghostToggleY, toggleWidth, toggleHeight }, 0.9f, 8, toggleBg);
+
+    // Calculate circle position with animation
+    float startX = ghostToggleX + 15.0f;  //left pos of the circle
+    float endX = ghostToggleX + toggleWidth - 15.0f; //right pos 
+    float progress = ghostAnimationProgress;
+    //start=0   0.5=middle  1=end
+    if (progress > 1.0f) progress = 1.0f;
+
+    float circleX;
+    //drawing circle according to the toggle and progress - animation
+    if (ghostEnabled) {
+        circleX = startX + (endX - startX) * progress;
+    }
+    else {
+        circleX = endX - (endX - startX) * progress;
+    }
+
+    Color textColor = BLACK;
+    Vector2 TextSize = MeasureTextEx(font, fullText, 14, 1);
+
+    //toggle k hisaab se likhna hai (right/left)
+    float textX;
+    if (ghostEnabled) {
+        textX = ghostToggleX + 10.0f;
+    }
+    else {
+        textX = ghostToggleX + 30.0f;
+    }
+
+    float textY = ghostToggleY + (toggleHeight - TextSize.y) / 2;
+    DrawTextEx(font, fullText, { textX, textY }, 14, 1, textColor);
+
+    Color circleColor = isHoveringGhost ? GhostHover : WHITE;
+    DrawCircle(circleX, ghostToggleY + toggleHeight / 2, 12.0f, circleColor);
+
+    if (gameOver) {
+        bool dummyRestart = false;
+        bool dummyReturnToMenu = false;
+        DrawGameOverScreen(font, score, dummyRestart, leaderboard);
+        return;
+    }
+}
+
 void Manager::Update(bool& musicOn, bool& gamePaused, bool isCountingDown, bool& ghostEnabled,
     float& ghostAnimationProgress, bool gameOver, bool& restartRequested, bool& returnToMenuRequested) {
+    
     Vector2 mouse = GetMousePosition();
 
-    // Only update game over screen if game is over
+    // Only update game over screen if game is over - obviously
     if (gameOver) {
         UpdateGameOverScreen(mouse, gameOver, restartRequested, returnToMenuRequested);
         UpdateParticles(GetFrameTime());
@@ -70,115 +182,12 @@ void Manager::Update(bool& musicOn, bool& gamePaused, bool isCountingDown, bool&
         }
         if (CheckCollisionPointRec(mouse, ghostToggleBounds) && !isCountingDown) {
             ghostEnabled = !ghostEnabled;
-            ghostAnimationProgress = 0.0f;
+            ghostAnimationProgress = 0.0f;  //starting animation from the beginning
         }
     }
 }
 
-void Manager::Draw(bool musicOn, bool gamePaused, int score, Font& font, bool ghostEnabled,
-    float ghostAnimationProgress, double time, int lines, bool gameOver,
-    Leaderboard& leaderboard, const Game& game, const PieceQueue& pieceQueue) {
 
-    // ============ LEFT PANEL ============
-    DrawHoldPanel(game);
-    DrawControlsPanel();
-
-    // ============ RIGHT PANEL ============
-    DrawNextPiecesPanel(pieceQueue);
-
-    // ============ GAME STATS PANEL ============
-    DrawRectangleRounded({ 50, 280, 200, 180 }, 0.3f, 6, PanelBlue);
-    DrawText("GAME STATS", 65, 250, 20, WHITE);
-
-    // Score in Game Stats box
-    DrawTextEx(font, "Score:", { 70, 310 }, 28, 1, WHITE);
-    char scoreText[20];
-    snprintf(scoreText, sizeof(scoreText), "%d", score);
-    DrawTextEx(font, scoreText, { 160, 310 }, 28, 1, WHITE);
-
-    // Time in Game Stats box
-    DrawTextEx(font, "Time:", { 70, 350 }, 28, 1, WHITE);
-    char timeText[20];
-    int minutes = (int)time / 60;
-    int seconds = (int)time % 60;
-    snprintf(timeText, sizeof(timeText), "%02d:%02d", minutes, seconds);
-    DrawTextEx(font, timeText, { 150, 350 }, 28, 1, WHITE);
-
-    // Lines in Game Stats box
-    DrawTextEx(font, "Lines:", { 70, 390 }, 28, 1, WHITE);
-    char linesText[20];
-    snprintf(linesText, sizeof(linesText), "%d", lines);
-    DrawTextEx(font, linesText, { 160, 390 }, 28, 1, WHITE);
-
-    // ============ GAME CONTROLS PANEL ============
-    DrawRectangleRounded({ 850, 500, 300, 200 }, 0.3f, 6, PanelBlue);
-    DrawText("GAME CONTROLS", 880, 475, 20, WHITE);
-
-    // Music button
-    Color musicHoverColor = isHoveringMusic ? LIGHTGRAY : WHITE;
-    DrawText("Music:", 910, 520, 18, WHITE);
-    if (musicOn) {
-        DrawTextureEx(musicOnTex, { (float)musicX, (float)musicY }, 0.0f, buttonScale, musicHoverColor);
-    }
-    else {
-        DrawTextureEx(musicOffTex, { (float)musicX, (float)musicY }, 0.0f, buttonScale, musicHoverColor);
-    }
-
-    // Pause button
-    Color pauseHoverColor = isHoveringPause ? LIGHTGRAY : WHITE;
-    DrawText("Pause:", 1025, 520, 18, WHITE);
-    if (gamePaused) {
-        DrawTextureEx(playTex, { (float)pauseX, (float)pauseY }, 0.0f, buttonScale, pauseHoverColor);
-    }
-    else {
-        DrawTextureEx(pauseTex, { (float)pauseX, (float)pauseY }, 0.0f, buttonScale, pauseHoverColor);
-    }
-
-    // Ghost toggle
-    const char* fullText = ghostEnabled ? "Ghost ON" : "Ghost OFF";
-    Color toggleBg = ghostEnabled ? GREEN : RED;
-    float toggleWidth = 100.0f;
-    float toggleHeight = 30.0f;
-    DrawRectangleRounded({ ghostToggleX, ghostToggleY, toggleWidth, toggleHeight }, 0.9f, 8, toggleBg);
-
-    // Calculate circle position with animation
-    float startX = ghostToggleX + 20.0f;
-    float endX = ghostToggleX + toggleWidth - 20.0f;
-    float progress = ghostAnimationProgress;
-    if (progress > 1.0f) progress = 1.0f;
-
-    float circleX;
-    if (ghostEnabled) {
-        circleX = startX + (endX - startX) * progress;
-    }
-    else {
-        circleX = endX - (endX - startX) * progress;
-    }
-
-    Color textColor = BLACK;
-    Vector2 TextSize = MeasureTextEx(font, fullText, 14, 1);
-
-    float textX;
-    if (ghostEnabled) {
-        textX = ghostToggleX + 10.0f;
-    }
-    else {
-        textX = ghostToggleX + 30.0f;
-    }
-
-    float textY = ghostToggleY + (toggleHeight - TextSize.y) / 2;
-    DrawTextEx(font, fullText, { textX, textY }, 14, 1, textColor);
-
-    Color circleColor = isHoveringGhost ? GhostHover : WHITE;
-    DrawCircle(circleX, ghostToggleY + toggleHeight / 2, 12.0f, circleColor);
-
-    if (gameOver) {
-        bool dummyRestart = false;
-        bool dummyReturnToMenu = false;
-        DrawGameOverScreen(font, score, dummyRestart, leaderboard);
-        return;
-    }
-}
 
 void Manager::UnloadTextures() {
     UnloadTexture(musicOnTex);
@@ -188,59 +197,67 @@ void Manager::UnloadTextures() {
 }
 
 void Manager::CreateParticles() {
-    particles.clear();
+    particles.clear();  //remove all the old ones
 
+    //now creating 100
     for (int i = 0; i < 100; i++) {
         GameOverParticle p;
-        p.position = { 600.0f, 300.0f };
-        float angle = GetRandomValue(0, 360) * DEG2RAD;
-        float speed = GetRandomValue(2, 8);
-        p.velocity = { cosf(angle) * speed, sinf(angle) * speed };
+        p.position = { 600.0f, 300.0f }; //all start from center of the screen 
+        float angle = GetRandomValue(0, 360) * DEG2RAD; //getting random angle and converting to radian
+        float speed = GetRandomValue(2, 8); //random speed of each
+        p.velocity = { cosf(angle) * speed, sinf(angle) * speed }; //cos is for x directon and sin is for y direction
 
-        // Mix new colors with your existing ones
-        int colorChoice = GetRandomValue(0, 4);
+        //getting random colours
+        int colorChoice = GetRandomValue(0, 4); 
         switch (colorChoice) {
         case 0: p.color = GameOverBrightRed; break;
         case 1: p.color = GameOverBrightCyan; break;
-        case 2: p.color = GameOverBorder; break;      // Your existing gold
+        case 2: p.color = GameOverBorder; break;    
         case 3: p.color = GameOverPurple; break;
-        case 4: p.color = ParticleGold; break;        // Your existing particle gold
+        case 4: p.color = ParticleGold; break; 
         }
 
-        p.size = GetRandomValue(3, 8);
-        p.life = GetRandomValue(50, 100) / 100.0f;
+        p.size = GetRandomValue(3, 8);  //smallest can be 3 pixels in diameter and largest can be of 8
+        p.life = GetRandomValue(50, 100) / 100.0f; //for how long is it visible
         particles.push_back(p);
     }
 }
 
 void Manager::UpdateParticles(float deltaTime) {
-    for (auto& particle : particles) {
+
+    for (GameOverParticle& particle : particles) {
+
+        //moving the particles according to the speed and time passed
+        //velocity is per frame so multiplying frameTime by 60 (since we have set 60fps)
         particle.position.x += particle.velocity.x * deltaTime * 60.0f;
         particle.position.y += particle.velocity.y * deltaTime * 60.0f;
+
+        //every second decrease 0.3 of the life
         particle.life -= deltaTime * 0.3f;
 
         // Apply gravity
         particle.velocity.y += 0.2f * deltaTime * 60.0f;
 
         // Fade out
-        particle.color.a = (unsigned char)(particle.life * 255);
+        particle.color.a = static_cast<unsigned char>(particle.life * 255);
     }
 
     // Remove dead particles
-    particles.erase(
-        remove_if(particles.begin(), particles.end(),
-            [](const GameOverParticle& p) { return p.life <= 0; }),
-        particles.end()
-    );
+    //looping from the bottom
+    for (int i = particles.size() - 1; i >= 0; i--) {
+        if (particles[i].life <= 0) {
+            particles.erase(particles.begin() + i);
+        }
+    }
 
     // Add new particles occasionally
-    if (particles.size() < 50 && GetRandomValue(0, 100) < 20) {
+    if (particles.size() < 50 && GetRandomValue(0, 100) < 20) { //get random here becoz we don't want to add in every frame
         GameOverParticle p;
         p.position = { (float)GetRandomValue(200, 1000), (float)GetRandomValue(100, 700) };
         float angle = GetRandomValue(0, 360) * DEG2RAD;
         float speed = GetRandomValue(1, 3);
         p.velocity = { cosf(angle) * speed, sinf(angle) * speed };
-        p.color = ParticleGold; // Gold
+        p.color = ParticleGold;
         p.size = GetRandomValue(2, 5);
         p.life = GetRandomValue(30, 80) / 100.0f;
         particles.push_back(p);
@@ -249,8 +266,8 @@ void Manager::UpdateParticles(float deltaTime) {
 
 void Manager::DrawParticles() {
     for (const auto& particle : particles) {
-        DrawCircle(particle.position.x, particle.position.y, particle.size, particle.color);
-        // Add glow effect
+        DrawCircle(particle.position.x, particle.position.y, particle.size, particle.color);     //size is radius in pixels
+        //border around the circle of the same color jsut a bit transparent
         DrawCircleLines(particle.position.x, particle.position.y, particle.size + 1,
             Color{ particle.color.r, particle.color.g, particle.color.b, 100 });
     }
@@ -282,66 +299,58 @@ void Manager::UpdateGameOverScreen(Vector2 mousePos, bool& gameOver, bool& resta
 }
 
 void Manager::DrawGameOverScreen(Font& font, int score, bool& restartRequested, Leaderboard& leaderboard) {
-    // Use your existing GameOverShadow color
+    //a dark overlay over the game screen
     DrawRectangle(0, 0, 1200, 800, GameOverShadow);
 
-    int centerX = 1200 / 2;
+    int centerX = 1200 / 2;     //center calculation
     int centerY = 800 / 2;
 
-    // ============ MAIN PANEL ============
+    //main box
     int panelWidth = 800;
     int panelHeight = 600;
     int panelX = centerX - panelWidth / 2;
     int panelY = centerY - panelHeight / 2;
 
-    // ============ OUTER BORDER (Around entire panel) ============
-    // Thick outer border with glow effect
-    for (int i = 3; i > 0; i--) {
-        DrawRectangleRoundedLines(
-            { (float)panelX - i, (float)panelY - i,
-              (float)panelWidth + i * 2, (float)panelHeight + i * 2 },
-            0.1f, 8,  Color{ 0, 200, 255, (unsigned char)(50 - i * 15) }
-        );
-    }
 
-    // Main outer border
+    // outer border - gold
     DrawRectangleRoundedLines(
         { (float)panelX, (float)panelY, (float)panelWidth, (float)panelHeight },
         0.1f, 8, GameOverBorder
     );
 
-    // Dark blue panel
+    // Dark blue panel - main game over box
     DrawRectangleRounded({ (float)panelX, (float)panelY, (float)panelWidth, (float)panelHeight },
         0.1f, 8, GameOverDarkBlue);
 
-    // ============ INNER BORDER (Inside panel) ============
+    //inner border - blue
     int innerPadding = 20;
+    //*2 becoz of both sides
     DrawRectangleRoundedLines(
         { (float)panelX + innerPadding, (float)panelY + innerPadding,
           (float)panelWidth - innerPadding * 2, (float)panelHeight - innerPadding * 2 },
         0.1f, 8, BlueBorder );
 
-    // ============ LINE SEPARATORS ============
+    //line separators
     DrawRectangle(panelX + 50, panelY + 230, panelWidth - 100, 2, GameOverLineGold);
     DrawRectangle(panelX + 50, panelY + 470, panelWidth - 100, 2, GameOverLineGold);
 
-    // ============ TITLE ============
+    //title
     const char* gameOverText = "GAME OVER";
     Vector2 titleSize = MeasureTextEx(font, gameOverText, 72, 3);
-
+    //shadow
     DrawTextEx(font, gameOverText,
         { centerX - titleSize.x / 2 + 3, (float)panelY + 28 + 3 },
         72, 3, BLACK);
-
+    //original text
     DrawTextEx(font, gameOverText,
         { centerX - titleSize.x / 2, (float)panelY + 28 },
         72, 3, GameOverBrightRed);
 
-    // ============ SCORES ============
+    //scores
     int scoresY = panelY + 140;
-    int spacing = panelWidth * 0.35;
+    int spacing = panelWidth * 0.35;  //between left/right scores
 
-    // FINAL SCORE (LEFT)
+    //final score
     const char* finalScoreLabel = "FINAL SCORE";
     Vector2 finalLabelSize = MeasureTextEx(font, finalScoreLabel, 36, 2);
     int finalScoreX = centerX - spacing / 2 - finalLabelSize.x / 2;
@@ -359,7 +368,7 @@ void Manager::DrawGameOverScreen(Font& font, int score, bool& restartRequested, 
         { (float)finalScoreValueX, (float)scoresY + 35 },
         48, 3, GameOverBrightCyan);
 
-    // BEST SCORE (RIGHT) - Use your existing Gold color
+    //best score on the right
     int bestScore = leaderboard.GetHighestScore();
     const char* bestScoreLabel = "BEST SCORE";
     Vector2 bestLabelSize = MeasureTextEx(font, bestScoreLabel, 36, 2);
@@ -376,30 +385,32 @@ void Manager::DrawGameOverScreen(Font& font, int score, bool& restartRequested, 
 
     DrawTextEx(font, bestScoreText,
         { (float)bestScoreValueX, (float)scoresY + 35 },
-        48, 3, GameOverBestScoreGold);  // Use your existing GameOverBorder (gold)
+        48, 3, GameOverBestScoreGold);  
 
-    // ============ LEADERBOARD ============
+    //leaderboard
     const char* leaderTitle = "TOP 5 SCORES";
     Vector2 leaderTitleSize = MeasureTextEx(font, leaderTitle, 28, 2);
     DrawTextEx(font, leaderTitle,
         { centerX - leaderTitleSize.x / 2, (float)panelY + 250 },
-        28, 2, ScoreColour);  // Use your existing ScoreColour
+        28, 2, ScoreColour);
 
     vector<int> topScores = leaderboard.GetTopScores(5);
 
     for (int i = 0; i < 5; i++) {
-        float yPos = panelY + 290 + (i * 35);
+        float yPos = panelY + 290 + (i * 35);   //line has 35 pixels gap
 
         char rank[10];
+        //printing 1,2,3,4,5
         snprintf(rank, sizeof(rank), "%d.", i + 1);
         DrawTextEx(font, rank,
             { (float)centerX - 100, yPos },
-            24, 1, ScoreColour);  // Use your existing ScoreColour
+            24, 1, ScoreColour);  
 
         if (i < topScores.size()) {
             char scoreDisplayText[20];
             snprintf(scoreDisplayText, sizeof(scoreDisplayText), "%d", topScores[i]);
 
+            //of topscore is current score it will be in green
             Color scoreColor = (topScores[i] == score) ? CurrentScoreHighlight : ScoreColour;
             DrawTextEx(font, scoreDisplayText,
                 { (float)centerX - 30, yPos },
@@ -412,10 +423,10 @@ void Manager::DrawGameOverScreen(Font& font, int score, bool& restartRequested, 
         }
     }
 
-    // ============ BUTTONS ============
+    //buttons
     int buttonY = panelY + 520;
 
-    // REPLAY BUTTON (Orange)
+    //replay button
     replayButton = { (float)centerX - 200, (float)buttonY, 150, 50 };
     Color replayColor = isHoveringReplay ?  GameOverBrightCyan: PanelBlue;
     DrawRectangleRounded(replayButton, 0.3f, 8, replayColor);
@@ -428,10 +439,7 @@ void Manager::DrawGameOverScreen(Font& font, int score, bool& restartRequested, 
           replayButton.y + replayButton.height / 2 - replayTextSize.y / 2 },
         28, 2, WHITE);
 
-
-
-
-    // MENU BUTTON (Purple)
+    //menu button
     menuButton = { (float)centerX + 50, (float)buttonY, 150, 50 };
     Color menuColor = isHoveringMenu ? GameOverPurpleHover : GameOverPurple;
     DrawRectangleRounded(menuButton, 0.3f, 8, menuColor);
@@ -444,31 +452,27 @@ void Manager::DrawGameOverScreen(Font& font, int score, bool& restartRequested, 
           menuButton.y + menuButton.height / 2 - menuTextSize.y / 2 },
         28, 2, WHITE);
 
-    // Use your existing GameOverQuote color
     const char* quote = "Great effort! Ready for another round?";
     Vector2 quoteSize = MeasureTextEx(font, quote, 20, 1);
     DrawTextEx(font, quote,
         { centerX - quoteSize.x / 2, (float)buttonY - 40 },
         20, 1, GameOverQuote);
 
-
-
-    DrawParticles();
+    DrawParticles();    //drawing particles on TOP of the game over screen
 }
 
 
 void Manager::DrawHoldPanel(const Game& game) {
-    // Hold Area (Top-left) - X: 50, Y: 100
+    // Hold Area (Top-left)
     DrawRectangleRounded({ 50, 100, 200, 140 }, 0.3f, 6, PanelBlue);
     DrawText("HOLD", 110, 70, 24, WHITE);
 
-    // For HOLD piece (simpler version):
-    if (game.IsHolding()) {
+    if (game.IsHolding()) { //if holding get that piece
         Piece tempHold = game.GetHoldPiece();
         tempHold.rowOffset = 0;
         tempHold.colOffset = 0;
 
-        int holdCellSize = 25;
+        int holdCellSize = 25;  //thora chota 
         vector<Position> tiles = tempHold.GetCellPositions();
 
         // Find min/max for centering
@@ -484,7 +488,6 @@ void Manager::DrawHoldPanel(const Game& game) {
         int pieceWidth = maxCol - minCol + 1;
         int pieceHeight = maxRow - minRow + 1;
 
-        // Center in hold box (200x140 at 50,100)
         int drawX = 150 - (pieceWidth * holdCellSize) / 2;  // 150 is center X
         int drawY = 170 - (pieceHeight * holdCellSize) / 2; // 170 is center Y
 
@@ -499,6 +502,8 @@ void Manager::DrawHoldPanel(const Game& game) {
         }
 
         for (Position item : tiles) {
+            //calculating positions for every piece
+            //-1 -1 for border
             DrawRectangle((item.COL - minCol) * holdCellSize + drawX,
                 (item.ROW - minRow) * holdCellSize + drawY,
                 holdCellSize - 1, holdCellSize - 1,
@@ -507,7 +512,7 @@ void Manager::DrawHoldPanel(const Game& game) {
         DrawText("HOLDING", 100, 215, 18, YELLOW);
     }
     else {
-        DrawText("EMPTY", 110, 160, 20, LIGHTGRAY);
+        DrawText("EMPTY", 110, 160, 20, LIGHTGRAY); //not holding any piece
     }
 }
 
@@ -531,7 +536,7 @@ void Manager::DrawNextPiecesPanel(const PieceQueue& pieceQueue) {
     for (int i = 0; i < nextThree.size() && i < 3; i++) {
         int yOffset = 140 + (i * 100); // Space them vertically
 
-        // Draw label
+        // Draw label for every piece
         DrawText(TextFormat("Piece %d:", i + 1), 860, yOffset - 10, 18, WHITE);
 
         // Create temporary piece for drawing
@@ -542,7 +547,7 @@ void Manager::DrawNextPiecesPanel(const PieceQueue& pieceQueue) {
         int previewCellSize = 25;
         vector<Position> tiles = tempPiece.GetCellPositions();
 
-        // Find min/max for centering
+        // Find min/max for centering same as in hold
         int minRow = 100, maxRow = -100;
         int minCol = 100, maxCol = -100;
         for (const Position& item : tiles) {
@@ -555,8 +560,6 @@ void Manager::DrawNextPiecesPanel(const PieceQueue& pieceQueue) {
         int pieceWidth = maxCol - minCol + 1;
         int pieceHeight = maxRow - minRow + 1;
 
-        // Center in each slot (300px wide box starting at X=850)
-        // Each slot is roughly 100px tall, centered at yOffset + 50
         int drawX = 1000 - (pieceWidth * previewCellSize) / 2;  // 1000 is center X (850 + 300/2)
         int drawY = (yOffset + 40) - (pieceHeight * previewCellSize) / 2; // Center of 100px slot
 
