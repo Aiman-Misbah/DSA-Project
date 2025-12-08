@@ -8,9 +8,9 @@
 #include "Colours.h"
 using namespace std;
 
-double lastUpdateTime = 0;
+double lastUpdateTime = 0;  //when the gravity was last applied
 
-bool EventTriggered (double interval) {
+bool EventTriggered (double interval) { //checking if enough time has passed to apply gravity again
     double currentTime = GetTime();
     if (currentTime - lastUpdateTime >= interval) {
         lastUpdateTime = currentTime;
@@ -31,7 +31,8 @@ int main() {
     WelcomeScreen welcomeScreen;
     bool gamePaused = false;
     bool gameStarted = false;
-    bool showInstructions = false;  // NEW: Track instructions screen
+    bool showInstructions = false;  
+
     float ghostAnimationProgress = 1.0f;
     bool wasGhostEnabled = true;
 
@@ -45,9 +46,8 @@ int main() {
                 }
             
             else {
-                // Welcome screen logic
                 bool startGame = false;
-                welcomeScreen.Update(startGame, showInstructions);  // UPDATED: Pass showInstructions
+                welcomeScreen.Update(startGame, showInstructions); 
                 if (startGame) {
                     gameStarted = true;
                     game.StartCountdown();
@@ -55,9 +55,8 @@ int main() {
             }
         }
         else {
-            // Main game logic (same as before)
-            bool previouslyPaused = gamePaused;
-            if (game.showGhost != wasGhostEnabled) {
+            bool previouslyPaused = gamePaused; //state previous pause state
+            if (game.showGhost != wasGhostEnabled) {    //if player clicked on the toggle update its state and animation bhi dikhaani hai
                 ghostAnimationProgress = 0.0f;
                 wasGhostEnabled = game.showGhost;
             }
@@ -66,22 +65,22 @@ int main() {
                 ghostAnimationProgress += GetFrameTime() * 5.0f;
                 if (ghostAnimationProgress > 1.0f) ghostAnimationProgress = 1.0f;
             }
+            //updating the ui accordingly
             Manager.Update(game.musicOn, gamePaused, game.IsCountingDown(), game.showGhost, ghostAnimationProgress, game.GameOver, restartRequested, returnToMenuRequested);
 
             if (restartRequested) {
                 game.Reset();
                 game.StartCountdown();
                 restartRequested = false;
-                // Reset any other states if needed
             }
 
             if (returnToMenuRequested) {
-                gameStarted = false;
+                gameStarted = false;    //game nhi khelna humein
                 game.Reset();
                 returnToMenuRequested = false;
-                // Reset welcome screen if needed
             }
 
+            //previously pause tha and ab resum krdia hai so start countdown
             bool justResumed = previouslyPaused && !gamePaused;
             if (justResumed) {
                 game.StartCountdown();
@@ -89,8 +88,6 @@ int main() {
 
             game.UpdateCountdown();
 
-            // Time tracking control - FIXED VERSION
-            // SIMPLIFIED Time tracking control
             if (gamePaused || game.IsCountingDown() || game.GameOver) {
                 game.StopTimeTracking(); // Stop timer in these states
             }
@@ -98,10 +95,12 @@ int main() {
                 game.StartTimeTracking(); // Start timer only when actually playing
             }
 
+            //can only change the music toggle when playing
             if (game.musicOn && !gamePaused && !game.IsCountingDown()) {
                 UpdateMusicStream(game.music);
             }
 
+            //these features only work when actually playing
             if (!gamePaused && !game.IsCountingDown()) {
                 game.UpdateMessages(GetFrameTime());
                 game.HandleInput();
@@ -109,6 +108,7 @@ int main() {
                 if (game.isDropping) {
                     static double lastHardDropTime = 0;
                     double currentTime = GetTime();
+                    //drops every 0.02 seconds
                     if (currentTime - lastHardDropTime >= 0.02) {
                         game.UpdateHardDrop();
                         lastHardDropTime = currentTime;
@@ -128,30 +128,32 @@ int main() {
 
         if (!gameStarted) {
             if (showInstructions) {
-                // NEW: Draw instructions screen
+                //instruction screen
                 welcomeScreen.DrawInstructions();
             }
             else {
-                // Draw welcome screen
+                //drawing the welcome screen
                 welcomeScreen.Draw();
             }
         }
         else {
-            // Draw game (same as before)
+            //actual game ko draw kro 
             game.Draw();
 
-            // Line where you call Manager.Draw (around line 129):
+            //ui drawing
             Manager.Draw(game.musicOn, gamePaused, game.score, font, game.showGhost,
                 ghostAnimationProgress, game.GetPlayTime(), game.GetTotalLinesCleared(),
                 game.GameOver, game.GetLeaderboard(), game, game.GetPieceQueue());
 
+            //if messages are to be drawn draw them 
             game.DrawMessages();
             
 
             if (gamePaused) {
-                DrawRectangle(290, 50, 15 * 35, 20 * 35, DarkOverlay);
+                DrawRectangle(290, 50, 15 * 35, 20 * 35, DarkOverlay);  //overlay on the board
                 int boardCenterX = 290 + (15 * 35) / 2;
                 int boardCenterY = 50 + (20 * 35) / 2;
+                //display PAUSED when paused
                 Vector2 textSize = MeasureTextEx(font, "PAUSED", 38, 2);
                 DrawTextEx(font, "PAUSED",
                     { boardCenterX - textSize.x / 2, boardCenterY - textSize.y / 2 },
