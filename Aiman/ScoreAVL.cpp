@@ -24,7 +24,6 @@ AVLScoreNode* ScoreAVL::RightRotate(AVLScoreNode* y) {
     AVLScoreNode* x = y->left;
     AVLScoreNode* T2 = x->right;
 
-    // Perform rotation
     x->right = y;
     y->left = T2;
 
@@ -39,11 +38,9 @@ AVLScoreNode* ScoreAVL::LeftRotate(AVLScoreNode* x) {
     AVLScoreNode* y = x->right;
     AVLScoreNode* T2 = y->left;
 
-    // Perform rotation
     y->left = x;
     x->right = T2;
 
-    // Update heights
     UpdateHeight(x);
     UpdateHeight(y);
 
@@ -51,7 +48,6 @@ AVLScoreNode* ScoreAVL::LeftRotate(AVLScoreNode* x) {
 }
 
 AVLScoreNode* ScoreAVL::InsertNode(AVLScoreNode* node, int val) {
-    // 1. Perform normal BST insertion
     if (!node) return new AVLScoreNode(val);
 
     if (val < node->score)
@@ -60,38 +56,29 @@ AVLScoreNode* ScoreAVL::InsertNode(AVLScoreNode* node, int val) {
         node->right = InsertNode(node->right, val);
     else {
 
-        return node;  // Tree structure unchanged, no rebalancing needed
+        return node;  
     }
 
-    // 2. Update height of this ancestor node
     UpdateHeight(node);
 
-    // 3. Get the balance factor
     int balance = GetBalance(node);
 
-    // 4. Check if this node became unbalanced
 
-    // Left Left Case
     if (balance > 1 && val < node->left->score)
         return RightRotate(node);
 
-    // Right Right Case
     if (balance < -1 && val > node->right->score)
         return LeftRotate(node);
 
-    // Left Right Case
     if (balance > 1 && val > node->left->score) {
         node->left = LeftRotate(node->left);
         return RightRotate(node);
     }
 
-    // Right Left Case
     if (balance < -1 && val < node->right->score) {
         node->right = RightRotate(node->right);
         return LeftRotate(node);
     }
-
-    // Return the (unchanged) node pointer
     return node;
 }
 
@@ -100,24 +87,21 @@ void ScoreAVL::Insert(int val) {
 }
 
 void ScoreAVL::ReverseInOrder(AVLScoreNode* node, vector<int>& result, int& remaining) {
-    if (!node || remaining <= 0) return;
+    if (!node || remaining <= 0) return;    //if none so stop there
 
     // Right first (larger values)
     ReverseInOrder(node->right, result, remaining);
 
-    // Add this score 'count' times (for duplicates)
-    for (int i = 0; i < node->count && remaining > 0; i++) {
-        result.push_back(node->score);
-        remaining--;
-    }
+    result.push_back(node->score);
+    remaining--;
 
     // Then left (smaller values)
     ReverseInOrder(node->left, result, remaining);
 }
 
 vector<int> ScoreAVL::GetTopScores(int n) {
-    vector<int> topScores;
-    if (n <= 0) return topScores;
+    vector<int> topScores;  //creating and returning a vector of the top scores
+    if (n <= 0) return topScores;   //empty hi return krdo
 
     int remaining = n;
     ReverseInOrder(root, topScores, remaining);
@@ -127,7 +111,7 @@ vector<int> ScoreAVL::GetTopScores(int n) {
 int ScoreAVL::GetHighestScore() {
     if (!root) return 0;
 
-    // Find rightmost node (maximum value in BST)
+    //rightmost is the maximum score
     AVLScoreNode* current = root;
     while (current->right) {
         current = current->right;
