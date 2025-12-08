@@ -3,7 +3,7 @@
 using namespace std;
 
 UndoStack::UndoStack(int cap) : capacity(cap) {
-    stack.reserve(capacity);
+    stack.reserve(capacity);    //vector ka apna method hai to create that much space
 }
 
 UndoStack::~UndoStack() {
@@ -12,8 +12,7 @@ UndoStack::~UndoStack() {
 
 void UndoStack::Push(const Piece& snapshot) {
     if (IsFull()) {
-        // drop oldest snapshot to make room
-        stack.erase(stack.begin());
+        stack.erase(stack.begin());   //stack.clear()
     }
     stack.push_back(snapshot);
 }
