@@ -1,12 +1,11 @@
 #include "PieceQueue.h"
+#include "Pieces.cpp"
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
 using namespace std;
 
-#include "Pieces.cpp"
 
-// SIMPLIFIED: Just get piece from bag, no repeat checks
 Piece PieceQueue::CreateRandomPiece() {
     // Refill bag if empty
     if (bag.GetSize() == 0) {
@@ -22,42 +21,37 @@ Piece PieceQueue::CreateRandomPiece() {
     // Get random piece from bag
     int index = rand() % bag.GetSize();
     Piece p = bag.GetPiece(index);
-    bag.RemovePiece(index);  // Removes from linked list bag!
+    bag.RemovePiece(index);  // Remove that from the bag as well
     return p;
 }
 
-// Constructor
 PieceQueue::PieceQueue(int cap) : q(cap), capacity(cap) {
-    srand(time(nullptr));
+    srand(time(NULL));
     FillStartup();
 }
 
-// SIMPLIFIED: Always use CreateRandomPiece, not CreateRandomPieceNoRepeat
 void PieceQueue::FillStartup() {
-    q.clear();
-
-    cout << "=== QUEUE INITIALIZED ===" << endl;
+    q.clear();  //first clearing the queue
 
     while (!IsFull()) {
-        q.enqueue(CreateRandomPiece());  // NO repeat checks!
+        q.enqueue(CreateRandomPiece()); //then add random pieces one by one till full
     }
 
 }
 
-// SIMPLIFIED: Always get fresh piece, no repeat checks
-Piece PieceQueue::Dequeue() {
+Piece PieceQueue::Dequeue() {   //never to be empty
     if (IsEmpty()) {
         Piece p = CreateRandomPiece();
-        q.enqueue(CreateRandomPiece());  // NO repeat checks!
+        q.enqueue(p);
         return p;
     }
 
+    //agar hata rahe hain to add bhi krenge (for the agla piece)
     Piece front = q.dequeue();
-    q.enqueue(CreateRandomPiece());  // NO repeat checks!
+    q.enqueue(CreateRandomPiece()); 
     return front;
 }
 
-// Rest of the functions stay the same...
 bool PieceQueue::IsEmpty() const {
     return q.isEmpty();
 }
@@ -81,10 +75,10 @@ vector<Piece> PieceQueue::GetAllPieces() const {
 }
 
 void PieceQueue::ClearAndSetPieces(const vector<Piece>& newPieces) {
-    q.clear();
-    for (const auto& piece : newPieces) {
+    q.clear();  //first clear the current queue
+    for (const Piece& piece : newPieces) {
         if (!q.isFull()) {
-            q.enqueue(piece);
+            q.enqueue(piece);   //then store the previous one in the current one
         }
     }
     cout << "Queue manually set to " << q.getSize() << " pieces" << endl;
