@@ -11,8 +11,8 @@ Game::Game() : pieceQueue(5) {
 
     // Use piece queue for ALL pieces
     current = pieceQueue.Dequeue();
-    current.rowOffset = 0;
-    current.colOffset = 5;
+    current.rowOffset = 0;      //center at teh top row
+    current.colOffset = 6;
 
     if (!PieceFits()) {
         GameOver = true;
@@ -28,24 +28,23 @@ Game::Game() : pieceQueue(5) {
     previousScore = 0;
     previousLinesCleared = 0;
 
-	previousPieceQueue = pieceQueue.GetAllPieces();
+	previousPieceQueue = pieceQueue.GetAllPieces(); //saving initial queue for undo
 
-    InitAudioDevice();
+    InitAudioDevice();      //initializing audio system
     music = LoadMusicStream("Sounds/music.mp3");
-    musicOn = true;
-    PlayMusicStream(music);
+    musicOn = true;         //music is on by default
+    PlayMusicStream(music); //start playing
     RotateSound = LoadSound("Sounds/rotate.mp3");
     ClearSound = LoadSound("Sounds/clear.mp3");
 
-    // Initialize features
-    isCountingDown = true;
+    isCountingDown = true;  //start mein countdown krna hai
     countdownNumber = 3;
-    countdownStartTime = GetTime();
+    countdownStartTime = GetTime(); //tracking when it is started
     ghostPiece = current.GetGhostPiece(board);
     showGhost = true;
-    isDropping = false;
-    gameStartTime = 0;
-    totalPlayTime = 0;
+    isDropping = false;     //space is not pressed so false
+    gameStartTime = 0;      //game abhi start nhi hua
+    totalPlayTime = 0;      //game ka time
     isTimeTracking = false;
     totalLinesCleared = 0;
 
@@ -56,16 +55,14 @@ Game::Game() : pieceQueue(5) {
     isHolding = false;
     holdPiece = Piece();
     
+    //jsut for checking
     cout << "Leaderboard initialized with " << leaderboard.GetTopScores(100).size() << " scores" << endl;
-
-    lastMoveTime = GetTime();
-    lastDownMoveTime = GetTime();
 
     cout << "=== GAME INITIALIZATION COMPLETE ===" << endl;
 }
 
 double Game::GetPlayTime() const {
-    if (!isTimeTracking) return totalPlayTime;
+    if (!isTimeTracking) return totalPlayTime;  //if not trackign time return that time wrna you need to calculate it
     return totalPlayTime + (GetTime() - gameStartTime);
 }
 
@@ -91,17 +88,17 @@ void Game::StartCountdown() {
 }
 
 void Game::UpdateCountdown() {
-    if (!isCountingDown) return;
+    if (!isCountingDown) return;    //not counting to leave
 
     double currentTime = GetTime();
-    double elapsed = currentTime - countdownStartTime;
+    double elapsed = currentTime - countdownStartTime;  //kitna time hogya since it started
 
-    if (elapsed >= 1.0 && countdownNumber > 1) {
+    if (elapsed >= 1.0 && countdownNumber > 1) {    //har second decrease the no
         countdownNumber--;
         countdownStartTime = currentTime;
     }
     else if (elapsed >= 1.0 && countdownNumber == 1) {
-        isCountingDown = false;
+        isCountingDown = false; //1 tak pohunch gaye counting stop game start
         countdownNumber = 0;
         StartTimeTracking();
     }
@@ -111,11 +108,11 @@ Game::~Game() {
     UnloadSound(RotateSound);
     UnloadSound(ClearSound);
     UnloadMusicStream(music);
-    CloseAudioDevice();
+    CloseAudioDevice();     //audio system ka kaam khatam
 }
 
 void Game::ToggleMusic() {
-    musicOn = !musicOn;
+    musicOn = !musicOn;     //music button pr jb click hota hai tb
     if (musicOn) {
         ResumeMusicStream(music);
     }
@@ -125,14 +122,12 @@ void Game::ToggleMusic() {
 }
 
 
-void Game::UpdateGhostPiece() {
+void Game::UpdateGhostPiece() {     //updating ghost's position with the original piece
     ghostPiece = current.GetGhostPiece(board);
 }
 
-void Game::Draw() {
-    // Draw the game board (centered)
+void Game::Draw() {     //drawing the three things
     board.Draw();
-
     if (showGhost) {
         ghostPiece.DrawGhost(50, 290);
     }
@@ -140,23 +135,23 @@ void Game::Draw() {
 }
 
 void Game::SaveBoardState() {
-    if (GameOver || isCountingDown) return;
+    if (GameOver || isCountingDown) return;     //don't save during these kionke faida nhi hai
 
-    previousScore = score;
+    //saving every thing
+    previousScore = score;      
     previousLinesCleared = totalLinesCleared;
     previousBoardState = board.GetBoardState();
-
 	previousPieceQueue = pieceQueue.GetAllPieces();
 
 }
 
-void Game::RestoreBoardState() {
+void Game::RestoreBoardState() {        //restoring jaisa pehle tha
     board.SetBoardState(previousBoardState);
 }
 
 void Game::UndoLastLock() {
     if (lockedPieceStack.IsEmpty() || previousBoardState.empty()) {
-        return;
+        return; //nothing to undo
     }
 
     cout << "=== UNDO LAST LOCK ===" << endl;
@@ -164,9 +159,10 @@ void Game::UndoLastLock() {
     // Get the last locked piece
     Piece lastLockedPiece = lockedPieceStack.Pop();
 
-    // RESTORE THE ENTIRE BOARD STATE (this will restore any cleared lines)
+    //restore the board - including the previously cleared lines
     RestoreBoardState();
 
+    //restore the queue by clearing it and setting it again with previous one
     if (!previousPieceQueue.empty()) {
         pieceQueue.ClearAndSetPieces(previousPieceQueue);
     }
@@ -175,12 +171,12 @@ void Game::UndoLastLock() {
     UndoStack::ResetPieceToTop(lastLockedPiece);
 
     lastLockedPiece.rowOffset = -3;
-    lastLockedPiece.colOffset = 5;
+    lastLockedPiece.colOffset = 6;
 
     // Set this as the current falling piece
     current = lastLockedPiece;
 
-    // RESTORE score and lines
+    //restore score and lines
     score = previousScore;
     totalLinesCleared = previousLinesCleared;
 
@@ -197,15 +193,15 @@ void Game::UndoLastLockedPiece() {
 }
 
 void Game::ToggleHold() {
-    if (!GameOver && !isCountingDown) {
+    if (!GameOver && !isCountingDown) { //only during game
         if (!IsHolding()) {
             // FIRST TIME: Store current piece and get next piece
             holdPiece = current;
-            current = pieceQueue.Dequeue();
+            current = pieceQueue.Dequeue(); //get the next piece as current
 
             // Check if new piece fits before spawning above
             current.rowOffset = 0;  // Test at row 0 first
-            current.colOffset = 5;
+            current.colOffset = 6;
 
             if (!PieceFits()) {
                 GameOver = true;
@@ -219,14 +215,14 @@ void Game::ToggleHold() {
             cout << "Piece held! Getting next piece from queue." << endl;
         }
         else {
-            // SWAP: Exchange current piece with hold piece
+            //swap current piece with hold piece
             Piece temp = current;
             current = holdPiece;
             holdPiece = temp;
 
-            // Check if swapped piece fits before spawning above
-            current.rowOffset = 0;  // Test at row 0 first
-            current.colOffset = 5;
+            //phir se wohi checking
+            current.rowOffset = 0;
+            current.colOffset = 6;
 
             if (!PieceFits()) {
                 GameOver = true;
@@ -244,15 +240,16 @@ void Game::ToggleHold() {
 
 
 void Game::MoveLeft() {
-    if (!GameOver && !isCountingDown) {
-        current.Move(0, -1);
+    if (!GameOver && !isCountingDown) { //move only during game
+        current.Move(0, -1);    //move left if not valid move back
         if (HasCollided() || !PieceFits()) {
             current.Move(0, 1);
         }
-        UpdateGhostPiece();
+        UpdateGhostPiece(); //updating the ghost piece as well
     }
 }
 
+//same with all the other movements
 void Game::MoveRight() {
     if (!GameOver && !isCountingDown) {
         current.Move(0, 1);
@@ -268,7 +265,7 @@ void Game::MoveDown() {
         current.Move(1, 0);
         if (HasCollided() || !PieceFits()) {
             current.Move(-1, 0);
-            LockPiece();
+            LockPiece();        //ab yahaan se nhi hil skta
         }
         UpdateGhostPiece();
     }
@@ -283,7 +280,7 @@ void Game::HardDrop() {
 void Game::UpdateHardDrop() {
     if (!isDropping) return;
 
-    current.Move(1, 0);
+    current.Move(1, 0);     //move down till locked
     if (HasCollided() || !PieceFits()) {
         current.Move(-1, 0);
         LockPiece();
@@ -294,11 +291,12 @@ void Game::UpdateHardDrop() {
 
 bool Game::HasCollided() {
     vector<Position> tiles = current.GetCellPositions();
+    //checking each and every block of the piece for collision aik ki bhi hui to it is considered as collision of whole
     for (Position item : tiles) {
         if (item.ROW >= 0 && board.CollisionDetected(item.ROW, item.COL)) {
             return true;
         }
-        if (item.COL < 0 || item.COL >= 15) {
+        if (item.COL < 0 || item.COL >= 15) {   //side boundaries
             return true;
         }
     }
@@ -307,6 +305,7 @@ bool Game::HasCollided() {
 
 void Game::RotatePiece() {
     if (!GameOver && !isCountingDown) {
+        //if rotated successfully play the sound and update ghost
         bool rotationSuccess = current.RotateWithWallKicks(board);
         if (rotationSuccess) {
             PlaySound(RotateSound);
@@ -318,41 +317,37 @@ void Game::RotatePiece() {
 void Game::LockPiece() {
     cout << "=== PIECE LOCKED ===" << endl;
 
-    // Save state before locking
-    SaveBoardState();
+    SaveBoardState();   // Save state before locking for undo
 
     // CLEAR the stack first (only keep most recent)
     lockedPieceStack.Clear();
-
-    // Save the current piece to locked piece stack
     lockedPieceStack.Push(current);
 
     vector<Position> tiles = current.GetCellPositions();
     for (Position item : tiles) {
         board.SetCell(item.ROW, item.COL, current.id);
+        //setting that id on the board (for row clearing)
     }
 
+    //checking for completed rows
     int rowsCleared = board.ClearRows();
     if (rowsCleared > 0) {
         PlaySound(ClearSound);
         UpdateScore(rowsCleared);
         cout << "Cleared " << rowsCleared << " rows! Current score: " << score << endl;
         
-        AddLineClearMessage(rowsCleared);
+        AddLineClearMessage(rowsCleared);   //uske mutaabik msg
     }
 
+    current = pieceQueue.Dequeue();     //next piece from queue
 
-    // Get next piece from queue
-    current = pieceQueue.Dequeue();
-
-    // CHECK FOR GAME OVER BEFORE spawning above
-    // Test if the piece would fit at spawn position (row 0)
+    //wohi testing to se it if it fits
     current.rowOffset = 0;  // Test at row 0 first
-    current.colOffset = 5;
+    current.colOffset = 6;
 
     if (!PieceFits()) {
         GameOver = true;
-        leaderboard.AddScore(score);
+        leaderboard.AddScore(score);   //saving the score as final
         cout << "Score " << score << " added to leaderboard. Bset: " << leaderboard.GetHighestScore() << endl;
         StopMusicStream(music);
     }
@@ -364,6 +359,7 @@ void Game::LockPiece() {
     UpdateGhostPiece();
 }
 bool Game::PieceFits() {
+    //similar to collision wala but this time checking for empty cells
     vector<Position> tiles = current.GetCellPositions();
     for (Position item : tiles) {
         if (item.ROW >= 0 && !board.isCellEmpty(item.ROW, item.COL)) {
@@ -374,37 +370,28 @@ bool Game::PieceFits() {
 }
 
 void Game::HandleInput() {
-    float currentTime = GetTime();
-
     // Handle Ctrl+Z for undoing last locked piece
     if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_Z)) {
         UndoLastLock();
     }
 
-    // Press 'H' to toggle hold (hold/release) - single press
+    // Press 'H' to toggle hold (hold/swap)
     if (IsKeyPressed(KEY_H)) {
         ToggleHold();
     }
 
-    // LEFT MOVEMENT with delay
-    if (IsKeyDown(KEY_LEFT) && (currentTime - lastMoveTime > moveDelay)) {
+    if (IsKeyPressed(KEY_LEFT)) {
         MoveLeft();
-        lastMoveTime = currentTime;
     }
 
-    // RIGHT MOVEMENT with delay
-    if (IsKeyDown(KEY_RIGHT) && (currentTime - lastMoveTime > moveDelay)) {
+    if (IsKeyPressed(KEY_RIGHT)) {
         MoveRight();
-        lastMoveTime = currentTime;
     }
 
-    // DOWN MOVEMENT with separate faster delay
-    if (IsKeyDown(KEY_DOWN) && (currentTime - lastDownMoveTime > downMoveDelay)) {
+    if (IsKeyPressed(KEY_DOWN)) {
         MoveDown();
-        lastDownMoveTime = currentTime;
     }
 
-    // SINGLE PRESS ACTIONS (no delay needed)
     if (IsKeyPressed(KEY_UP)) {
         RotatePiece();
     }
@@ -414,8 +401,8 @@ void Game::HandleInput() {
     }
 
     // Update ghost piece if any movement happened
-    bool moved = (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_RIGHT) ||
-        IsKeyDown(KEY_DOWN) || IsKeyPressed(KEY_UP) ||
+    bool moved = (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) ||
+        IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_UP) ||
         IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_H));
 
     if (moved) {
@@ -425,49 +412,46 @@ void Game::HandleInput() {
 
 void Game::Reset() {
     cout << "=== GAME RESET ===" << endl;
-    board.Initialize();
+    board.Initialize();     //clearing the board and starting anew
 
     // Reset piece queue and get new pieces
     pieceQueue.Clear();
     pieceQueue.FillStartup();
     current = pieceQueue.Dequeue();
     current.rowOffset = -3;
-    current.colOffset = 5;
+    current.colOffset = 6;
+    UpdateGhostPiece();     //updating the ghost piece according to the new piece
 
     // Reset hold
     isHolding = false;
     holdPiece = Piece();
 
+    // Reset game ki saari cheezein
     GameOver = false;
     score = 0;
     previousScore = 0;
     previousLinesCleared = 0;
 
+    //clearing everything related to undo
     previousPieceQueue.clear();
-
-    // Clear board state
     previousBoardState.clear();
-
-    // Clear undo stack on reset
     lockedPieceStack.Clear();
 
-    UpdateGhostPiece();
     totalPlayTime = 0;
     isTimeTracking = false;
     gameStartTime = 0;
     totalLinesCleared = 0;
 
-        PlayMusicStream(music);
+     PlayMusicStream(music);    //restart the music - not resume
 
     cout << "Game reset complete!" << endl;
-
-    
 }
 
 void Game::UpdateScore(int lines) {
     if (lines > 0) {
-        totalLinesCleared += lines;
+        totalLinesCleared += lines;     //tracking all the lines cleared
     }
+    //increasing score accordingly
     if (lines == 1)
         score += 100;
     else if (lines == 2)
@@ -485,11 +469,10 @@ void Game::UpdateScore(int lines) {
 }
 
 
-// Add this after other methods, before Draw()
 
 void Game::AddLineClearMessage(int linesCleared) {
 
-    if (linesCleared <= 0) return;
+    if (linesCleared <= 0) return;  //no lines - no msg
 
     LineClearMessage msg;
     msg.isActive = true;
@@ -521,56 +504,51 @@ void Game::AddLineClearMessage(int linesCleared) {
         break;
     }
 
-    activeMessages.push_back(msg);
+    activeMessages = msg;
 }
 
 void Game::UpdateMessages(float deltaTime) {
-    // Update all active messages
-    for (auto& msg : activeMessages) {
-        if (msg.isActive) {
-            msg.displayTime += deltaTime;
-            if (msg.displayTime >= msg.duration) {
-                msg.isActive = false;
-            }
+
+    if (activeMessages.isActive) {
+        activeMessages.displayTime += deltaTime;    //updating time passed
+        if (activeMessages.displayTime >= activeMessages.duration) {    //time hogya to done
+            activeMessages.isActive = false;
         }
     }
 
-    // Remove inactive messages
-    activeMessages.erase(
-        remove_if(activeMessages.begin(), activeMessages.end(),
-            [](const LineClearMessage& msg) { return !msg.isActive; }),
-        activeMessages.end()
-    );
 }
 
 void Game::DrawMessages() {
-    // Draw all active messages on top of the board
+    // Draw active messages on top of the board
     int boardX = 290;
     int boardY = 50;
     int boardWidth = 15 * 35;
     int boardHeight = 20 * 35;
 
-    for (const auto& msg : activeMessages) {
-        if (!msg.isActive) continue;
+    if (activeMessages.isActive) {
 
         // Calculate position (center of board)
         int centerX = boardX + boardWidth / 2;
         int centerY = boardY + boardHeight / 2;
 
+
         // Calculate alpha (fade out effect)
-        float progress = msg.displayTime / msg.duration;
-        float alpha = 1.0f - progress; // Fade from 1.0 to 0.0
-        Color textColor = msg.color;
+        float progress = activeMessages.displayTime / activeMessages.duration;
+        float alpha = 1.0f - progress; // Fade from 1.0(visible) to 0.0(invisible)
+        Color textColor = activeMessages.color;
         textColor.a = static_cast<unsigned char>(alpha * 255);
 
         // Calculate font size (pulse effect)
-        int fontSize = 30 + static_cast<int>(10 * sin(msg.displayTime * 5.0f));
+        //30 is base size - add/sub 10 for pulse
+        int fontSize = 30 + static_cast<int>(10 * sin(activeMessages.displayTime * 5.0f));
+
+
 
         // Draw text
-        Vector2 textSize = MeasureTextEx(GetFontDefault(), msg.text.c_str(), fontSize, 2);
-        DrawTextEx(GetFontDefault(), msg.text.c_str(),
+        Vector2 textSize = MeasureTextEx(GetFontDefault(), activeMessages.text.c_str(), fontSize, 2);
+        DrawTextEx(GetFontDefault(), activeMessages.text.c_str(),
             { centerX - textSize.x / 2, centerY - textSize.y / 2 },
             fontSize, 2, textColor);
-    }
-}
+        }
 
+}
