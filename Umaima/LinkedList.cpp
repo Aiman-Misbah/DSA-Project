@@ -24,7 +24,7 @@ void LinkedList::AddPiece(Piece piece) {
 
 Piece LinkedList::GetPiece(int index) {
     if (index < 0 || index >= size) {
-        // Return default piece or handle error
+        // Return default piece - like in Queue.cpp
         return Piece();
     }
 
