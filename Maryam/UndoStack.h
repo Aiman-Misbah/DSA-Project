@@ -6,8 +6,7 @@ using namespace std;
 
 class UndoStack {
 private:
-    
-    
+
     vector<Piece> stack;
     int capacity;
 
