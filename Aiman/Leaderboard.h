@@ -6,12 +6,12 @@ using namespace std;
 
 class Leaderboard {
 private:
-    ScoreAVL scoresTree;
+    ScoreAVL scoresTree;    //leaderboard is basically the AVL tree
 
 public:
 
     void AddScore(int score);
     vector<int> GetTopScores(int count);
     int GetHighestScore();
-    void Reset();
+    void Reset();   //clearing the leaderboard
 };
