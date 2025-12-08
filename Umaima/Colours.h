@@ -4,7 +4,7 @@
 #include <vector>
 using namespace std;
 
-// Existing colors - KEEP THESE
+//for the vector of 8 colours
 extern const Color DarkGray;
 extern const Color Green;
 extern const Color Red;
@@ -14,44 +14,38 @@ extern const Color Purple;
 extern const Color Cyan;
 extern const Color Blue;
 
-
-extern const Color LightBlue;
-extern const Color DarkBlue;
-extern const Color PanelBlue;
-extern const Color DarkOverlay;
-
-// NEW - Add ONLY these missing custom colors:
-extern const Color TetrisRed;             // T letter color {247, 87, 87, 255}
-extern const Color TetrisGreen;           // E letter color {87, 247, 87, 255}
-extern const Color TetrisBlue;            // R letter color {87, 87, 247, 255}
-extern const Color TetrisYellow;          // I letter color {247, 247, 87, 255}
-extern const Color TetrisPurple;          // S letter color {247, 87, 247, 255}
-
-// Game Over screen 
-// 
-// 
-// s - Manager.cpp
-extern const Color instructionBlue;  // {162, 59, 85, 255}
-extern const Color GameOverShadow;          // {0, 0, 0, 150}
-extern const Color ScoreColour;
-extern const Color GameOverBorder;          // {255, 215, 0, 100}
-extern const Color CurrentScoreHighlight;   // {100, 255, 100, 255}
-extern const Color EmptyScoreSlot;          // {150, 150, 150, 200}
-extern const Color GameOverQuote;           // {200, 200, 255, 200}
-extern const Color ParticleGold;            // {255, 215, 0, 200}
-extern const Color GhostHover;              // {250, 250, 250, 255}
+extern const Color DarkBlue;	//main background colour
+extern const Color PanelBlue;	//panel boxes colour
+extern const Color DarkOverlay;	//semi-transparent overlay for pause and countdown screens
 
 
-// ============ ADD THESE TO COLOURS.H ============
-extern const Color GameOverDarkBlue;
-extern const Color GameOverBrightRed;
-extern const Color GameOverBrightCyan;
-extern const Color GameOverPurple;
+//for the welcome screen
+extern const Color TetrisRed;             
+extern const Color TetrisGreen; 
+extern const Color TetrisBlue;    
+extern const Color TetrisYellow;  
+extern const Color TetrisPurple;   
+
+
+extern const Color instructionBlue;  //instruction screen box
+extern const Color instructionBG; //instruction screen background
+extern const Color GameOverShadow;	//overlay on the game for game over screen
+extern const Color ScoreColour;		//for scores in the list
+extern const Color GameOverBorder;	//gold-ish color for border    
+extern const Color CurrentScoreHighlight;  //green highlight
+extern const Color EmptyScoreSlot;	//grey color for empty entries  
+extern const Color GameOverQuote;	//light blue for the text at the bottom    
+extern const Color ParticleGold;            
+extern const Color GhostHover;   //hover on the ghost toggle - grayish          
+
+extern const Color GameOverDarkBlue; //game over box ka bg
+extern const Color GameOverBrightRed; //game over title
+extern const Color GameOverBrightCyan;	//current score and replay button
+extern const Color GameOverPurple;	//menu button
 extern const Color GameOverPurpleHover;
-extern const Color GameOverTextWhite;
-extern const Color GameOverLineGold;
-// Add this to Colours.h:
-extern const Color GameOverBestScoreGold;
-extern const Color BlueBorder;
+extern const Color GameOverTextWhite;	//off-white labels
+extern const Color GameOverLineGold;	//separators
+extern const Color GameOverBestScoreGold;	//best score
+extern const Color BlueBorder;	//inner border
 
 vector<Color> GetCellColours();
