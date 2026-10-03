@@ -1,0 +1,16 @@
+# Build output
+main.exe
+*.obj
+*.o
+
+# Runtime DLLs copied for local execution
+*.dll
+
+# Visual Studio
+.vs/
+
+# Kilo editor
+.kilo/
+
+# Personal/local IDE files
+CppProperties.json

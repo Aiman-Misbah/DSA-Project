@@ -1,5 +1,6 @@
 #include "ui/Manager.h"
 #include "ui/Colours.h"
+#include <math.h>
 #include <iostream>
 using namespace std;
 
